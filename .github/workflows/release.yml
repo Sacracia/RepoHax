@@ -14,6 +14,11 @@ on:
         description: 'Release tag name (e.g., v1.0.0). Will be created on the chosen ref if it does not exist.'
         required: true
         type: string
+      repo_version_override:
+        description: 'REPO game version (e.g., 0.4.0). Used if REPO_VERSION file is missing in the chosen ref. Leave empty to read from file.'
+        required: false
+        type: string
+        default: ''
 
 permissions:
   contents: write
@@ -55,12 +60,19 @@ jobs:
         run: |
           $tag         = '${{ steps.params.outputs.release_tag }}'
           $haxVersion  = $tag.TrimStart('v')
-          if (-not (Test-Path REPO_VERSION)) {
-            Write-Error "REPO_VERSION file missing in ref '${{ steps.params.outputs.build_ref }}'"
+          $override    = '${{ inputs.repo_version_override }}'.Trim()
+
+          if ($override) {
+            $repoVersion = $override.TrimStart('v')
+            Write-Host "REPO version source: override input"
+          } elseif (Test-Path REPO_VERSION) {
+            $repoVersion = (Get-Content -Raw REPO_VERSION).Trim().TrimStart('v')
+            Write-Host "REPO version source: REPO_VERSION file"
+          } else {
+            Write-Error "REPO_VERSION file missing in ref '${{ steps.params.outputs.build_ref }}' and no override provided. Set 'repo_version_override' input when running workflow."
             exit 1
           }
-          $repoVersion = (Get-Content -Raw REPO_VERSION).Trim()
-          if (-not $repoVersion) { Write-Error 'REPO_VERSION is empty'; exit 1 }
+          if (-not $repoVersion) { Write-Error 'Resolved REPO version is empty'; exit 1 }
 
           "hax_version=$haxVersion"   | Out-File -Append $env:GITHUB_OUTPUT
           "repo_version=$repoVersion" | Out-File -Append $env:GITHUB_OUTPUT
