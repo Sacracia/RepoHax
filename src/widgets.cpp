@@ -929,6 +929,111 @@ namespace Cheat::Widgets
         return changed;
     }
 
+    static void ApplyTextFilter(wchar_t* buf, TextInputFilter filter)
+    {
+        if (filter == TextInputFilter::Any || !buf)
+            return;
+
+        size_t write = 0;
+        bool dotSeen = false;
+        for (size_t i = 0; buf[i]; ++i)
+        {
+            wchar_t c = buf[i];
+            bool valid = false;
+            if (c >= L'0' && c <= L'9')
+                valid = true;
+            else if (c == L'-' && write == 0)
+                valid = true;
+            else if (filter == TextInputFilter::Float && c == L'.' && !dotSeen)
+            {
+                valid = true;
+                dotSeen = true;
+            }
+
+            if (valid)
+                buf[write++] = c;
+        }
+        buf[write] = L'\0';
+    }
+
+    float CalcTextInputHeight()
+    {
+        const float fontH = Theme::DescFontSize * Hax::Gui::G.ScaleFactor;
+        const float padY = 4_px;
+        return Hax::Gui::GetFontLineHeight(MAIN_FONT, fontH) + padY * 2.f;
+    }
+
+    bool TextInput(size_t id, wchar_t* buf, size_t bufSize, const TextInputParams& params)
+    {
+        if (!buf || bufSize == 0)
+            return false;
+
+        const float fontH = Theme::DescFontSize * Hax::Gui::G.ScaleFactor;
+        const Hax::Vector2 padding = {8_px, 4_px};
+        const float minW = Hax::Gui::Scale(params.MinW);
+
+        const float textH = Hax::Gui::GetFontLineHeight(MAIN_FONT, fontH);
+        const Hax::Vector2 btnSize = {minW, textH + padding.Y * 2.f};
+
+        Hax::Rect bounds;
+        bounds.Min = Hax::Gui::GetCursorPos();
+        bounds.Max = bounds.Min + btnSize;
+
+        Hax::Gui::PlaceItem(btnSize);
+        if (!Hax::Gui::IsItemVisible(bounds))
+            return false;
+
+        const float px3 = 3_px;
+        const float px1 = 1_px;
+        const float px5 = 5_px;
+
+        if (params.Disabled)
+        {
+            Hax::Gui::DrawRect(bounds.Min, bounds.Max, {.FillColor = Theme::FrameColor, .Rounding = px5});
+
+            Hax::WStringView shown = (buf[0] != L'\0') ? Hax::WStringView{buf} : params.Hint;
+            Hax::Gui::Color col = (buf[0] != L'\0') ? Theme::MainCol : Theme::DescColor;
+            Hax::Vector2 textPos = bounds.Min + padding;
+            Hax::Gui::DrawString(MAIN_FONT, shown, textPos, fontH, {.Color = col});
+
+            Hax::Gui::DrawRect(bounds.Min, bounds.Max, {.FillColor = Theme::DisabledMaskCol, .Rounding = px5});
+            return false;
+        }
+
+        if (Hax::Gui::IsItemHovered(id))
+            Hax::Gui::SetMouseIcon(Hax::Gui::MouseIcon_TextInput);
+
+        bool focused = Hax::Gui::IsItemFocused(id);
+
+        if (focused)
+        {
+            Hax::Gui::DrawRect(bounds.Min - Hax::Vector2(px3, px3), bounds.Max + Hax::Vector2(px3, px3),
+                {.FillColor = Hax::Gui::Color(0x2B69FF40), .Rounding = px5});
+            Hax::Gui::DrawRect(bounds.Min - Hax::Vector2(px1, px1), bounds.Max + Hax::Vector2(px1, px1),
+                {.FillColor = Theme::ActiveColor, .Rounding = px5});
+        }
+        Hax::Gui::DrawRect(bounds.Min, bounds.Max, {.FillColor = Theme::FrameColor, .Rounding = px5});
+
+        Hax::Rect textBounds;
+        textBounds.Min = bounds.Min + padding;
+        textBounds.Max = bounds.Max - padding;
+
+        Hax::Gui::StringEditParams sep{};
+        sep.Hint = params.Hint;
+        sep.HintColor = Theme::DescColor;
+        sep.TextColor = Theme::MainCol;
+        sep.CaretColor = Theme::MainCol;
+
+        bool changed = Hax::Gui::StringEdit(id, MAIN_FONT, buf, bufSize, fontH, textBounds, sep);
+
+        if (changed && params.Filter != TextInputFilter::Any)
+            ApplyTextFilter(buf, params.Filter);
+
+        Hax::Gui::Interact(id, bounds);
+
+        return changed;
+    }
+
     bool Checkbox(size_t id, bool& val)
     {
         float size = Theme::CheckboxSize * Hax::Gui::G.ScaleFactor;

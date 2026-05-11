@@ -71,6 +71,24 @@ namespace Cheat
         bool RepeatBtn(size_t id, Hax::WStringView label, bool enabled = true);
         bool Hotkey(size_t id, int& key);
         bool HotkeyEx(size_t id, int& key, Hax::WStringView label, Hax::WStringView desc = {});
+
+        enum class TextInputFilter
+        {
+            Any,
+            Int,
+            Float,
+        };
+
+        struct TextInputParams
+        {
+            Hax::WStringView Hint;
+            TextInputFilter Filter = TextInputFilter::Any;
+            float MinW = 100.f;
+            bool Disabled = false;
+        };
+
+        bool TextInput(size_t id, wchar_t* buf, size_t bufSize, const TextInputParams& params = {});
+        float CalcTextInputHeight();
         bool Checkbox(size_t id, bool& val);
         bool CheckboxEx(size_t id, bool& val, Hax::WStringView text);
         void HorizontalLine(float th, float w = 0.f);
