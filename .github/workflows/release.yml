@@ -54,6 +54,14 @@ jobs:
           ref: ${{ steps.params.outputs.build_ref }}
           fetch-depth: 0
 
+      - name: Resolve commit SHA
+        id: sha
+        shell: pwsh
+        run: |
+          $commitSha = (git rev-parse HEAD).Trim()
+          "commit_sha=$commitSha" | Out-File -Append $env:GITHUB_OUTPUT
+          Write-Host "Commit SHA  : $commitSha"
+
       - name: Read versions
         id: ver
         shell: pwsh
@@ -140,7 +148,7 @@ jobs:
         with:
           name: ${{ steps.ver.outputs.release_name }}
           tag_name: ${{ steps.params.outputs.release_tag }}
-          target_commitish: ${{ steps.params.outputs.build_ref }}
+          target_commitish: ${{ steps.sha.outputs.commit_sha }}
           body_path: release_body.md
           files: release/version.dll
           fail_on_unmatched_files: true
