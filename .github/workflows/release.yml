@@ -1,0 +1,92 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need full history for changelog generation
+
+      - name: Read versions
+        id: ver
+        shell: pwsh
+        run: |
+          $tag         = '${{ github.ref_name }}'              # e.g. "v1.2.0"
+          $haxVersion  = $tag.TrimStart('v')                   # "1.2.0"
+          $repoVersion = (Get-Content -Raw REPO_VERSION).Trim()
+          if (-not $repoVersion) { Write-Error 'REPO_VERSION is empty'; exit 1 }
+
+          "hax_version=$haxVersion"   | Out-File -Append $env:GITHUB_OUTPUT
+          "repo_version=$repoVersion" | Out-File -Append $env:GITHUB_OUTPUT
+          "release_name=RepoHax $tag for REPO v$repoVersion" | Out-File -Append $env:GITHUB_OUTPUT
+
+          Write-Host "Hax version : $haxVersion"
+          Write-Host "REPO version: $repoVersion"
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build Release x64
+        run: msbuild RepoHax.sln /p:Configuration=Release /p:Platform=x64 /v:minimal /nologo
+
+      - name: Stage release files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item build/Release/bin/version.dll release/version.dll
+
+      - name: Generate changelog
+        id: changelog
+        shell: pwsh
+        run: |
+          $prev = git tag --sort=-creatordate --list 'v*' | Select-Object -Skip 1 -First 1
+          if ($prev) {
+            $range  = "$prev..${{ github.ref_name }}"
+            $header = "**Changes since $prev**"
+          } else {
+            $range  = '${{ github.ref_name }}'
+            $header = '**Initial release**'
+          }
+          $log = git log $range --pretty=format:'- %s (%h)' --no-merges
+          if (-not $log) { $log = '_no commit history available_' }
+
+          $body = @"
+          ## Built for REPO v${{ steps.ver.outputs.repo_version }}
+
+          Drop ``version.dll`` next to the game executable to load the cheat.
+
+          ## $header
+
+          $log
+          "@
+
+          # Write to file for action-gh-release to consume
+          $body | Out-File -FilePath release_body.md -Encoding utf8
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RepoHax-${{ github.ref_name }}
+          path: release/version.dll
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ steps.ver.outputs.release_name }}
+          body_path: release_body.md
+          files: release/version.dll
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
