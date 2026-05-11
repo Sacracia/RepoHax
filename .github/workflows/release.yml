@@ -121,7 +121,7 @@ jobs:
             $header = '**Initial release**'
           }
 
-          $log = git log $range --pretty=format:'- %s (%h)' --no-merges
+          $log = (git log $range --pretty=format:'- %s (%h)' --no-merges) -join "`n"
           if (-not $log) { $log = '_no commit history available_' }
 
           $body = @"
