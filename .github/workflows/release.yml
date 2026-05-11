@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref to build (tag, branch, or commit SHA)'
+        required: true
+        type: string
+      release_tag:
+        description: 'Release tag name (e.g., v1.0.0). Will be created on the chosen ref if it does not exist.'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -13,17 +23,42 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
+      - name: Resolve build parameters
+        id: params
+        shell: pwsh
+        run: |
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch') {
+            $buildRef   = '${{ inputs.ref }}'
+            $releaseTag = '${{ inputs.release_tag }}'
+          } else {
+            $buildRef   = '${{ github.ref_name }}'
+            $releaseTag = '${{ github.ref_name }}'
+          }
+          if (-not $releaseTag.StartsWith('v')) {
+            Write-Error "Release tag must start with 'v', got '$releaseTag'"
+            exit 1
+          }
+          "build_ref=$buildRef"     | Out-File -Append $env:GITHUB_OUTPUT
+          "release_tag=$releaseTag" | Out-File -Append $env:GITHUB_OUTPUT
+          Write-Host "Build ref   : $buildRef"
+          Write-Host "Release tag : $releaseTag"
+
+      - name: Checkout build ref
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # need full history for changelog generation
+          ref: ${{ steps.params.outputs.build_ref }}
+          fetch-depth: 0
 
       - name: Read versions
         id: ver
         shell: pwsh
         run: |
-          $tag         = '${{ github.ref_name }}'              # e.g. "v1.2.0"
-          $haxVersion  = $tag.TrimStart('v')                   # "1.2.0"
+          $tag         = '${{ steps.params.outputs.release_tag }}'
+          $haxVersion  = $tag.TrimStart('v')
+          if (-not (Test-Path REPO_VERSION)) {
+            Write-Error "REPO_VERSION file missing in ref '${{ steps.params.outputs.build_ref }}'"
+            exit 1
+          }
           $repoVersion = (Get-Content -Raw REPO_VERSION).Trim()
           if (-not $repoVersion) { Write-Error 'REPO_VERSION is empty'; exit 1 }
 
@@ -50,14 +85,22 @@ jobs:
         id: changelog
         shell: pwsh
         run: |
-          $prev = git tag --sort=-creatordate --list 'v*' | Select-Object -Skip 1 -First 1
+          $current = '${{ steps.params.outputs.release_tag }}'
+          $headSha = git rev-parse HEAD
+
+          # Look for a previous v* tag, ignoring the current one if it exists
+          $prev = git tag --sort=-creatordate --list 'v*' |
+                  Where-Object { $_ -ne $current } |
+                  Select-Object -First 1
+
           if ($prev) {
-            $range  = "$prev..${{ github.ref_name }}"
+            $range  = "$prev..$headSha"
             $header = "**Changes since $prev**"
           } else {
-            $range  = '${{ github.ref_name }}'
+            $range  = $headSha
             $header = '**Initial release**'
           }
+
           $log = git log $range --pretty=format:'- %s (%h)' --no-merges
           if (-not $log) { $log = '_no commit history available_' }
 
@@ -71,13 +114,12 @@ jobs:
           $log
           "@
 
-          # Write to file for action-gh-release to consume
           $body | Out-File -FilePath release_body.md -Encoding utf8
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: RepoHax-${{ github.ref_name }}
+          name: RepoHax-${{ steps.params.outputs.release_tag }}
           path: release/version.dll
           if-no-files-found: error
 
@@ -85,6 +127,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ steps.ver.outputs.release_name }}
+          tag_name: ${{ steps.params.outputs.release_tag }}
+          target_commitish: ${{ steps.params.outputs.build_ref }}
           body_path: release_body.md
           files: release/version.dll
           fail_on_unmatched_files: true
