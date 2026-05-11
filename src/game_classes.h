@@ -764,6 +764,18 @@ private:
     METHOD(Discover);
 };
 
+struct CosmeticWorldObjectSetup : System::Object
+{
+    META("Assembly-CSharp", "", "ValuableDirector/CosmeticWorldObjectSetup");
+
+    CosmeticWorldObjectSetup() : System::Object(nullptr) {}
+    CosmeticWorldObjectSetup(UVM::Object* ptr) : System::Object(ptr) {}
+
+    inline operator bool() const { return !null(); }
+
+    FIELD(prefab, PrefabRef);
+};
+
 struct ValuableDirector : UnityEngine::MonoBehaviour
 {
     META("Assembly-CSharp", "", "ValuableDirector");
@@ -775,6 +787,10 @@ struct ValuableDirector : UnityEngine::MonoBehaviour
 
     STATIC_FIELD(instance, ValuableDirector);
     FIELD(valuableList, System::List<ValuableObject>);
+    FIELD(cosmeticWorldObjectSetups, System::List<CosmeticWorldObjectSetup>);
+    FIELD(cosmeticWorldObjectsLevelLoopsMax, int);
+
+    METHOD(CosmeticWorldObjectLevelLoopsClampedGet);
 };
 
 struct ItemGun : UnityEngine::MonoBehaviour

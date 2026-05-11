@@ -113,7 +113,14 @@ namespace Cheat::Visuals
     X(LocKey_Medium, L"Medium", L"Средняя") \
     X(LocKey_Large, L"Large", L"Большая") \
     X(LocKey_Unknown, L"Unknown", L"Неизвестное") \
-    X(LocKey_UnlockAll, L"Unlock all", L"Открыть все")
+    X(LocKey_UnlockAll, L"Unlock all", L"Открыть все") \
+    X(LocKey_CosmeticBox, L"Cosmetic box", L"Коробка косметики") \
+    X(LocKey_RarityCommon, L"Common", L"Обычная") \
+    X(LocKey_RarityUncommon, L"Uncommon", L"Необычная") \
+    X(LocKey_RarityRare, L"Rare", L"Редкая") \
+    X(LocKey_RarityUltraRare, L"Ultra rare", L"Очень редкая") \
+    X(LocKey_RemoveCosmeticLimit, L"Remove extraction limit", L"Снять лимит выноса") \
+    X(LocKey_EnableBeforeLevel, L"Enable before entering a level", L"Включать до входа в уровень")
 
     enum LocKey 
     {
@@ -1366,10 +1373,63 @@ namespace Cheat::Visuals
             Widgets::EndPanel();
 
             Widgets::BeginPanel(HAX_LINE);
-            Widgets::PanelHeader(g_Loc[LocKey_COSMETICS]);
+            Widgets::PanelHeader(g_Loc[LocKey_COSMETICS], g_Loc[LocKey_AvailableIfHost]);
             {
                 if (Widgets::Button(HAX_LINE, g_Loc[LocKey_UnlockAll], {}, {.MinW = Hax::Gui::GetContentRegionAvail().X}))
                     GCheat->UnlockAllCosmetic = true;
+
+                Widgets::HorizontalLine(1_px);
+
+                Widgets::ToggleEx(HAX_LINE, GCheat->RemoveCosmeticLimit, g_Loc[LocKey_RemoveCosmeticLimit], g_Loc[LocKey_EnableBeforeLevel]);
+
+                Widgets::HorizontalLine(1_px);
+
+                {
+                    static size_t s_SelectedRarity;
+                    static const LocKey s_RarityKeys[] = {
+                        LocKey_RarityCommon,
+                        LocKey_RarityUncommon,
+                        LocKey_RarityRare,
+                        LocKey_RarityUltraRare,
+                    };
+
+                    Widgets::MainLabel(g_Loc[LocKey_CosmeticBox]);
+
+                    const float spacing2 = 5_px;
+                    Hax::Vector2 sz = Widgets::CalcButtonSize(g_Loc[LocKey_Spawn]);
+                    Hax::Gui::BeginHorizontal(spacing2);
+                    {
+                        constexpr size_t dropListId = Hax::Hash(L"CosmeticBoxSelect");
+                        const float dropListW = Hax::Gui::GetContentRegionAvail().X - spacing2 - sz.X;
+
+                        Hax::Gui::BeginVertical(3_px);
+                        {
+                            if (Widgets::DropdownBtn(HAX_LINE, g_Loc[s_RarityKeys[s_SelectedRarity]], dropListW))
+                                Widgets::OpenPopup(dropListId, Hax::Gui::GetCursorPos());
+                        }
+                        Hax::Gui::EndVertical();
+
+                        const float selectableH = Widgets::CalcButtonHeight();
+                        const float dropListH = selectableH * _countof(s_RarityKeys) + 5_px * 2.f + 1.f;
+                        if (Widgets::BeginDropList(dropListId, {dropListW, dropListH}))
+                        {
+                            for (size_t i = 0; i < _countof(s_RarityKeys); ++i)
+                            {
+                                if (Widgets::Selectable(HAX_LINE + i * 10000, g_Loc[s_RarityKeys[i]], s_SelectedRarity == i, {.MinW = dropListW}))
+                                {
+                                    s_SelectedRarity = i;
+                                    Widgets::ClosePopup(dropListId);
+                                }
+                            }
+                            Widgets::EndDropList();
+                        }
+
+                        bool enabled = !GCheat->IsClient && GCheat->IsInGame;
+                        if (Widgets::Button(HAX_LINE, g_Loc[LocKey_Spawn], {}, {.Enabled = enabled}))
+                            GCheat->CosmeticBoxToSpawn = (int)s_SelectedRarity;
+                    }
+                    Hax::Gui::EndHorizontal();
+                }
             }
             Widgets::EndPanel();
         }

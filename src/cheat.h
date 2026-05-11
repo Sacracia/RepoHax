@@ -87,6 +87,7 @@ namespace Cheat
         SafetyHookInline PhysGrabber_PhysGrabOverCharge_Hook;
         SafetyHookInline SpectateCamera_HeadEnergyLogic_Hook;
         SafetyHookInline EnemyRigidbody_FixedUpdate_Hook;
+        SafetyHookInline ValuableDirector_CosmeticWorldObjectLevelLoopsClampedGet_Hook;
 
         ID3D11RenderTargetView* RenderTarget;
         ID3D11Device* Device;
@@ -233,6 +234,9 @@ namespace Cheat
         size_t TotalBans;
 
         bool UnlockAllCosmetic;
+
+        int CosmeticBoxToSpawn = -1;
+        bool RemoveCosmeticLimit;
     };
 
     inline Context* GCheat;

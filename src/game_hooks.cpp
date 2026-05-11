@@ -34,11 +34,13 @@ namespace Cheat::GameHooks
     static void Hooked__PostLateUpdateLoop();
     static void Hooked__PresentAfterDrawLoop();
     static void Hooked__EnemyRigidbody_FixedUpdate(EnemyRigidbody __this);
+    static int Hooked__ValuableDirector_CosmeticWorldObjectLevelLoopsClampedGet(ValuableDirector __this);
 
     static bool IsInGame();
     static void* GetPlayerLoopPtr(System::Type type, System::Type subType);
     static void Heal(PhysGrabObjectImpactDetector obj, float value);
     static void SpawnItem(Item item);
+    static void SpawnCosmeticBox(int rarity);
     static void ParseEnemies();
     static void ParseItems();
     static void ParseLevels();
@@ -81,6 +83,7 @@ namespace Cheat::GameHooks
         HOOK(PhysGrabber::s_PhysGrabOverCharge.m_Pointer, PhysGrabber_PhysGrabOverCharge);
         HOOK(SpectateCamera::s_HeadEnergyLogic.m_Pointer, SpectateCamera_HeadEnergyLogic);
         HOOK(EnemyRigidbody::s_FixedUpdate.m_Pointer, EnemyRigidbody_FixedUpdate);
+        HOOK(ValuableDirector::s_CosmeticWorldObjectLevelLoopsClampedGet.m_Pointer, ValuableDirector_CosmeticWorldObjectLevelLoopsClampedGet);
         #undef HOOK
     }
 
@@ -330,6 +333,13 @@ namespace Cheat::GameHooks
             {
                 GCheat->UnlockAllCosmetic = false;
                 MetaManager::instance().CosmeticUnlockAll();
+            }
+
+            if (GCheat->CosmeticBoxToSpawn >= 0)
+            {
+                int rarity = GCheat->CosmeticBoxToSpawn;
+                GCheat->CosmeticBoxToSpawn = -1;
+                SpawnCosmeticBox(rarity);
             }
 
             /*for (size_t i = 0; i < GCheat->LoadRequests.size(); ++i)
@@ -876,6 +886,14 @@ namespace Cheat::GameHooks
         return GCheat->PhotonNetwork_IsMasterClient_Hook.unsafe_call<bool>();
     }
 
+    static int Hooked__ValuableDirector_CosmeticWorldObjectLevelLoopsClampedGet(ValuableDirector __this)
+    {
+        if (GCheat->RemoveCosmeticLimit && __this)
+            return __this.cosmeticWorldObjectsLevelLoopsMax();
+
+        return GCheat->ValuableDirector_CosmeticWorldObjectLevelLoopsClampedGet_Hook.unsafe_call<int, ValuableDirector>(__this);
+    }
+
     static void Hooked__ItemBattery_Update(ItemBattery __this)
     {
         try
@@ -1099,6 +1117,38 @@ namespace Cheat::GameHooks
             UnityEngine::Transform transform = camera.GetTransform();
             UnityEngine::Vector3 pos = transform.GetPosition() + transform.GetForward() * 2.f - transform.GetUp();
             UnityEngine::Object::Instantiate<UnityEngine::GameObject>(item.prefab().Prefab(), pos, UnityEngine::Quaternion::identity());
+        }
+    }
+
+    static void SpawnCosmeticBox(int rarity)
+    {
+        UnityEngine::Camera camera = SemiFunc::MainCamera();
+        if (!camera)
+            return;
+
+        ValuableDirector dir = ValuableDirector::instance();
+        if (!dir)
+            return;
+
+        auto setups = dir.cosmeticWorldObjectSetups();
+        if (!setups || rarity < 0 || rarity >= setups.GetCount())
+            return;
+
+        CosmeticWorldObjectSetup setup = setups[rarity];
+        if (!setup || !setup.prefab())
+            return;
+
+        if (SemiFunc::IsMasterClient())
+        {
+            UnityEngine::Transform transform = camera.GetTransform();
+            UnityEngine::Vector3 pos = transform.GetPosition() + transform.GetForward() - transform.GetUp();
+            Photon::PhotonNetwork::InstantiateRoomObject(setup.prefab().resourcePath(), pos, UnityEngine::Quaternion::identity());
+        }
+        if (!SemiFunc::IsMultiplayer())
+        {
+            UnityEngine::Transform transform = camera.GetTransform();
+            UnityEngine::Vector3 pos = transform.GetPosition() + transform.GetForward() * 2.f - transform.GetUp();
+            UnityEngine::Object::Instantiate<UnityEngine::GameObject>(setup.prefab().Prefab(), pos, UnityEngine::Quaternion::identity());
         }
     }
 
