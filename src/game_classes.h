@@ -364,6 +364,24 @@ struct PhysGrabber : UnityEngine::MonoBehaviour
     METHOD(PhysGrabOverCharge);
 };
 
+struct LevelValuables : System::Object
+{
+    META("Assembly-CSharp", "", "LevelValuables");
+
+    LevelValuables() : System::Object(nullptr) {}
+    LevelValuables(UVM::Object* ptr) : System::Object(ptr) {}
+
+    inline operator bool() const { return !null(); }
+
+    FIELD_EX(tinyList, "tiny", System::List<PrefabRef>);
+    FIELD_EX(smallList, "small", System::List<PrefabRef>);
+    FIELD_EX(mediumList, "medium", System::List<PrefabRef>);
+    FIELD_EX(bigList, "big", System::List<PrefabRef>);
+    FIELD_EX(wideList, "wide", System::List<PrefabRef>);
+    FIELD_EX(tallList, "tall", System::List<PrefabRef>);
+    FIELD_EX(veryTallList, "veryTall", System::List<PrefabRef>);
+};
+
 struct Level : UnityEngine::Object
 {
     META("Assembly-CSharp", "", "Level");
@@ -375,6 +393,7 @@ struct Level : UnityEngine::Object
     inline bool operator==(const Level& o) const { return GetPtr() == o.GetPtr(); }
 
     FIELD(NarrativeName, System::String);
+    FIELD(ValuablePresets, System::List<LevelValuables>);
 };
 
 struct RunManager : UnityEngine::MonoBehaviour
@@ -655,6 +674,7 @@ struct LevelGenerator : UnityEngine::MonoBehaviour
 
     STATIC_FIELD(Instance, LevelGenerator);
     FIELD(LevelPathPoints, System::List<LevelPoint>);
+    FIELD_EX(currentLevel, "Level", Level);
     FIELD(Generated, bool);
 
 private:
@@ -759,6 +779,7 @@ struct ValuableObject : UnityEngine::MonoBehaviour
 
     FIELD(physGrabObject, PhysGrabObject);
     FIELD(dollarValueCurrent, float);
+    FIELD(dollarValueOverride, int);
 
 private:
     METHOD(Discover);

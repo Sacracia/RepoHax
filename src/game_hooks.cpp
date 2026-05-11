@@ -41,8 +41,10 @@ namespace Cheat::GameHooks
     static void Heal(PhysGrabObjectImpactDetector obj, float value);
     static void SpawnItem(Item item);
     static void SpawnCosmeticBox(int rarity);
+    static void SpawnValuable(PrefabRef prefab, int overrideValue);
     static void ParseEnemies();
     static void ParseItems();
+    static void ParseValuables();
     static void ParseLevels();
     static void DrawPlayerChams(PlayerAvatar player, UnityEngine::CommandBuffer cb, UnityEngine::Material aliveMat, UnityEngine::Material deadMat);
     static Hax::Optional<Visuals::EnemyEspData> ParseEnemyEspData(Enemy enemy);
@@ -163,6 +165,9 @@ namespace Cheat::GameHooks
             if (GCheat->ItemsPool.Empty())
                 ParseItems();
 
+            if (GCheat->ValuablesPool.Empty())
+                ParseValuables();
+
             if (GCheat->LevelsBan.Empty())
                 ParseLevels();
 
@@ -261,6 +266,15 @@ namespace Cheat::GameHooks
                 Item item = GCheat->ItemToSpawn;
                 GCheat->ItemToSpawn = nullptr;
                 SpawnItem(item);
+            }
+
+            if (GCheat->ValuableToSpawn)
+            {
+                PrefabRef prefab = GCheat->ValuableToSpawn;
+                int value = GCheat->ValuableSpawnValue;
+                GCheat->ValuableToSpawn = nullptr;
+                GCheat->ValuableSpawnValue = 0;
+                SpawnValuable(prefab, value);
             }
 
             if (GCheat->ForceNextLevel)
@@ -1170,6 +1184,35 @@ namespace Cheat::GameHooks
         }
     }
 
+    static void SpawnValuable(PrefabRef prefab, int overrideValue)
+    {
+        UnityEngine::Camera camera = SemiFunc::MainCamera();
+        if (!camera || !prefab)
+            return;
+
+        UnityEngine::GameObject go{nullptr};
+
+        if (SemiFunc::IsMasterClient())
+        {
+            UnityEngine::Transform transform = camera.GetTransform();
+            UnityEngine::Vector3 pos = transform.GetPosition() + transform.GetForward() - transform.GetUp();
+            go = Photon::PhotonNetwork::InstantiateRoomObject(prefab.resourcePath(), pos, UnityEngine::Quaternion::identity());
+        }
+        if (!SemiFunc::IsMultiplayer())
+        {
+            UnityEngine::Transform transform = camera.GetTransform();
+            UnityEngine::Vector3 pos = transform.GetPosition() + transform.GetForward() * 2.f - transform.GetUp();
+            go = UnityEngine::Object::Instantiate<UnityEngine::GameObject>(prefab.Prefab(), pos, UnityEngine::Quaternion::identity());
+        }
+
+        if (go && overrideValue > 0)
+        {
+            ValuableObject obj = go.GetComponent<ValuableObject>();
+            if (obj)
+                obj.dollarValueOverride() = overrideValue;
+        }
+    }
+
     static void SpawnCosmeticBox(int rarity)
     {
         UnityEngine::Camera camera = SemiFunc::MainCamera();
@@ -1270,6 +1313,67 @@ namespace Cheat::GameHooks
                     }
                     else
                         Hax::LogError(GCheat->LogFile, L"Unable to parse item %s", ptr);
+                }
+            }
+        }
+    }
+
+    static void ParseValuables()
+    {
+        LevelGenerator gen = LevelGenerator::Instance();
+        if (!gen)
+            return;
+
+        Level level = gen.currentLevel();
+        if (!level)
+            return;
+
+        auto presets = level.ValuablePresets();
+        if (!presets)
+            return;
+
+        Hax::LogDebug(GCheat->LogFile, L"Parsing valuables");
+
+        for (int p = 0; p < presets.GetCount(); ++p)
+        {
+            LevelValuables preset = presets[p];
+            if (!preset)
+                continue;
+
+            System::List<PrefabRef> groups[7] = {
+                preset.tinyList(), preset.smallList(), preset.mediumList(),
+                preset.bigList(), preset.wideList(), preset.tallList(), preset.veryTallList()
+            };
+
+            for (int g = 0; g < 7; ++g)
+            {
+                System::List<PrefabRef> list = groups[g];
+                if (!list)
+                    continue;
+
+                for (int i = 0; i < list.GetCount(); ++i)
+                {
+                    PrefabRef ref = list[i];
+                    if (!ref)
+                        continue;
+
+                    System::String prefabName = ref.prefabName();
+                    if (!prefabName)
+                        continue;
+
+                    Hax::char16* ptr = prefabName.begin();
+                    if (wcsncmp(ptr, L"Valuable ", 9) == 0)
+                        ptr += 9;
+
+                    Hax::WStringView name = ptr;
+
+                    if (!GCheat->ValuablesPool.Contains(name))
+                    {
+                        GCheat->ValuablesPool.Insert(name, ref);
+                        UVM::GCHandleNew(*ref.GetPtr(), true);
+                        UVM::GCHandleNew(*prefabName.GetPtr(), true);
+                        Hax::LogDebug(GCheat->LogFile, L"Valuable parsed %ls", ptr);
+                    }
                 }
             }
         }

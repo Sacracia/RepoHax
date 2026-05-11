@@ -122,7 +122,9 @@ namespace Cheat::Visuals
     X(LocKey_RemoveCosmeticLimit, L"Remove extraction limit", L"Снять лимит выноса") \
     X(LocKey_EnableBeforeLevel, L"Enable before entering a level", L"Включать до входа в уровень") \
     X(LocKey_TeleportFarthestBox, L"Teleport farthest box", L"Телепортировать дальнюю коробку") \
-    X(LocKey_CosmeticBoxesEsp, L"Cosmetic boxes ESP", L"Подсветка коробок")
+    X(LocKey_CosmeticBoxesEsp, L"Cosmetic boxes ESP", L"Подсветка коробок") \
+    X(LocKey_StartingValue, L"Starting value", L"Начальная цена") \
+    X(LocKey_ValueHint, L"e.g. 1000 (0 = random)", L"например 1000 (0 = случайно)")
 
     enum LocKey 
     {
@@ -1153,6 +1155,66 @@ namespace Cheat::Visuals
                 bool disabled = !GCheat->IsInGame || !dir || dir.extractionPointActive();
                 if (Widgets::Button(HAX_LINE, g_Loc[LocKey_ActivateNext], {}, {.Enabled = !disabled, .MinW = Hax::Gui::GetContentRegionAvail().X}))
                     GCheat->ActivateNextPoint = true;
+            }
+            Widgets::EndPanel();
+
+            Widgets::BeginPanel(HAX_LINE);
+            Widgets::PanelHeader(g_Loc[LocKey_SPAWN], g_Loc[LocKey_AvailableIfHost]);
+            {
+                static size_t s_SelectedValuable;
+                size_t nVal = GCheat->ValuablesPool.Size();
+
+                const float spacing2 = 5_px;
+                Hax::Vector2 sz = Widgets::CalcButtonSize(g_Loc[LocKey_Spawn]);
+
+                Hax::Gui::BeginHorizontal(spacing2);
+                {
+                    constexpr size_t dropListId = Hax::Hash(L"ValuableSelect");
+                    const float dropListW = Hax::Gui::GetContentRegionAvail().X - spacing2 - sz.X;
+
+                    Hax::Gui::BeginVertical(3_px);
+                    {
+                        Hax::WStringView preview = L"-";
+                        if (s_SelectedValuable < nVal)
+                            preview = GCheat->ValuablesPool.begin()[s_SelectedValuable].key;
+
+                        if (Widgets::DropdownBtn(HAX_LINE, preview, dropListW))
+                            Widgets::OpenPopup(dropListId, Hax::Gui::GetCursorPos());
+                    }
+                    Hax::Gui::EndVertical();
+
+                    const float selectableH = Widgets::CalcButtonHeight();
+                    const float dropListH = selectableH * Hax::Max(1ULL, Hax::Min(nVal, 8ULL)) + 5_px * 2.f + 1.f;
+                    if (Widgets::BeginDropList(dropListId, {dropListW, dropListH}))
+                    {
+                        for (size_t i = 0; i < nVal; ++i)
+                        {
+                            if (Widgets::Selectable(HAX_LINE + i * 10000, GCheat->ValuablesPool.begin()[i].key, s_SelectedValuable == i, {.MinW = dropListW}))
+                            {
+                                s_SelectedValuable = i;
+                                Widgets::ClosePopup(dropListId);
+                            }
+                        }
+                        Widgets::EndDropList();
+                    }
+
+                    bool enabled = !GCheat->IsClient && s_SelectedValuable < nVal && GCheat->IsInGame;
+                    if (Widgets::Button(HAX_LINE, g_Loc[LocKey_Spawn], {}, {.Enabled = enabled}))
+                    {
+                        int val = _wtoi(GCheat->ValuableValueInputBuf);
+                        if (val < 0)
+                            val = 0;
+                        GCheat->ValuableSpawnValue = val;
+                        GCheat->ValuableToSpawn = (GCheat->ValuablesPool.begin() + s_SelectedValuable)->value;
+                    }
+                }
+                Hax::Gui::EndHorizontal();
+
+                Widgets::HorizontalLine(1_px);
+
+                Widgets::MainLabel(g_Loc[LocKey_StartingValue]);
+                Widgets::TextInput(HAX_LINE, GCheat->ValuableValueInputBuf, _countof(GCheat->ValuableValueInputBuf),
+                    {.Hint = g_Loc[LocKey_ValueHint], .Filter = Widgets::TextInputFilter::Int, .MinW = Hax::Gui::GetContentRegionAvail().X / Hax::Gui::G.ScaleFactor});
             }
             Widgets::EndPanel();
         }

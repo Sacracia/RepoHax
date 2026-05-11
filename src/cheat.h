@@ -197,6 +197,11 @@ namespace Cheat
         Hax::Map<Hax::WStringView, int> ItemsPool;
         Item ItemToSpawn;
 
+        Hax::Map<Hax::WStringView, PrefabRef> ValuablesPool;
+        PrefabRef ValuableToSpawn;
+        int ValuableSpawnValue;
+        wchar_t ValuableValueInputBuf[16] = {};
+
         Hax::Vector<LevelBan> LevelsBan;
         bool ForceNextLevel;
         bool ActivateNextPoint;
