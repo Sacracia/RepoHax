@@ -1801,10 +1801,10 @@ namespace Cheat::Visuals
         Hax::Gui::DrawLine(bl, br, {.FillColor = 0x000000FF, .Th = 3_px});
         Hax::Gui::DrawLine(tl, bl, {.FillColor = 0x000000FF, .Th = 3_px});
 
-        Hax::Gui::DrawLine(tl, tr, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
-        Hax::Gui::DrawLine(tr, br, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
-        Hax::Gui::DrawLine(bl, br, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
-        Hax::Gui::DrawLine(tl, bl, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
+        Hax::Gui::DrawLine(tl, tr, {.FillColor = col, .Th = 1_px});
+        Hax::Gui::DrawLine(tr, br, {.FillColor = col, .Th = 1_px});
+        Hax::Gui::DrawLine(bl, br, {.FillColor = col, .Th = 1_px});
+        Hax::Gui::DrawLine(tl, bl, {.FillColor = col, .Th = 1_px});
     }
 
     static void Text(Hax::Gui::FontHandle hFont,
