@@ -590,9 +590,18 @@ struct EnemyParent : UnityEngine::Behaviour
     inline operator bool() const { return !null(); }
     inline bool operator==(const EnemyParent& e) const { return GetPtr() == e.GetPtr(); }
 
+    void Despawn()
+    {
+        THROW_IF_NULL();
+        s_Despawn.Invoke<void, EnemyParent>(*this);
+    }
+
     FIELD_EX(enemy, "Enemy", Enemy);
     FIELD(Spawned, bool);
     FIELD(enemyName, System::String);
+
+private:
+    METHOD(Despawn);
 };
 
 struct EnemySetup : UnityEngine::Object

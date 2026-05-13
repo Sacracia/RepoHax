@@ -173,6 +173,27 @@ namespace Cheat::GameHooks
             if (GCheat->LevelsBan.Empty())
                 ParseLevels();
 
+            if (GCheat->KillAllEnemies)
+            {
+                GCheat->KillAllEnemies = false;
+                if (!GCheat->IsClient)
+                {
+                    if (EnemyDirector dir = EnemyDirector::instance())
+                    {
+                        const int despawnState = EnemyState::Despawn();
+                        for (EnemyParent parent : dir.enemiesSpawned())
+                        {
+                            if (!parent || !parent.Spawned())
+                                continue;
+                            Enemy e = parent.enemy();
+                            if (e && e.CurrentState() == despawnState)
+                                continue;
+                            parent.Despawn();
+                        }
+                    }
+                }
+            }
+
             if (GCheat->EnemyToSpawn)
             {
                 EnemySetup enemy = GCheat->EnemyToSpawn;

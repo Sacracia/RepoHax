@@ -129,7 +129,8 @@ namespace Cheat::Visuals
     X(LocKey_Current, L"Current", L"Текущее") \
     X(LocKey_Set, L"Set", L"Установить") \
     X(LocKey_CurrencyHint, L"e.g. 99999", L"например 99999") \
-    X(LocKey_FreezeExtract, L"Freeze auto-extract", L"Заморозить экстракт")
+    X(LocKey_FreezeExtract, L"Freeze auto-extract", L"Заморозить экстракт") \
+    X(LocKey_KillAllEnemies, L"Kill all enemies", L"Убить всех врагов")
 
     enum LocKey 
     {
@@ -883,6 +884,12 @@ namespace Cheat::Visuals
 
                /* Widgets::HorizontalLine(1_px);
                 Widgets::ToggleEx(HAX_LINE, GCheat->Blind, g_Loc[LocKey_CantSeePlayers], g_Loc[LocKey_AvailableIfHost], {.Disabled = GCheat->IsClient});*/
+                Widgets::HorizontalLine(1_px);
+                {
+                    bool enabled = !GCheat->IsClient && GCheat->IsInGame;
+                    if (Widgets::Button(HAX_LINE, g_Loc[LocKey_KillAllEnemies], g_Loc[LocKey_HostOnly], {.Enabled = enabled, .MinW = Hax::Gui::GetContentRegionAvail().X}))
+                        GCheat->KillAllEnemies = true;
+                }
                 Widgets::HorizontalLine(1_px);
                 Widgets::ToggleEx(HAX_LINE, GCheat->NoGrabMaxTime, g_Loc[LocKey_NoGrabLimit], g_Loc[LocKey_AvailableIfHost], {.Disabled = GCheat->IsClient});
                 Widgets::HorizontalLine(1_px);

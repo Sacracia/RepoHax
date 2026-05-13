@@ -174,6 +174,7 @@ namespace Cheat
         size_t SelectedEnemySetup;
 
         EnemySetup EnemyToSpawn;
+        bool KillAllEnemies;
         bool Blind;
         bool NoGrabMaxTime;
 
