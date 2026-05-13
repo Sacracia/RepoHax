@@ -35,6 +35,7 @@ namespace Cheat::GameHooks
     static void Hooked__PresentAfterDrawLoop();
     static void Hooked__EnemyRigidbody_FixedUpdate(EnemyRigidbody __this);
     static int Hooked__ValuableDirector_CosmeticWorldObjectLevelLoopsClampedGet(ValuableDirector __this);
+    static void Hooked__ExtractionPoint_StateSet(ExtractionPoint __this, int newState);
 
     static bool IsInGame();
     static void* GetPlayerLoopPtr(System::Type type, System::Type subType);
@@ -87,6 +88,7 @@ namespace Cheat::GameHooks
         HOOK(SpectateCamera::s_HeadEnergyLogic.m_Pointer, SpectateCamera_HeadEnergyLogic);
         HOOK(EnemyRigidbody::s_FixedUpdate.m_Pointer, EnemyRigidbody_FixedUpdate);
         HOOK(ValuableDirector::s_CosmeticWorldObjectLevelLoopsClampedGet.m_Pointer, ValuableDirector_CosmeticWorldObjectLevelLoopsClampedGet);
+        HOOK(ExtractionPoint::s_StateSet.m_Pointer, ExtractionPoint_StateSet);
         #undef HOOK
     }
 
@@ -963,6 +965,14 @@ namespace Cheat::GameHooks
             return __this.cosmeticWorldObjectsLevelLoopsMax();
 
         return GCheat->ValuableDirector_CosmeticWorldObjectLevelLoopsClampedGet_Hook.unsafe_call<int, ValuableDirector>(__this);
+    }
+
+    static void Hooked__ExtractionPoint_StateSet(ExtractionPoint __this, int newState)
+    {
+        if (GCheat->FreezeExtraction && newState == ExtractionPoint_State::Success())
+            return;
+
+        GCheat->ExtractionPoint_StateSet_Hook.unsafe_call<void, ExtractionPoint, int>(__this, newState);
     }
 
     static void Hooked__ItemBattery_Update(ItemBattery __this)

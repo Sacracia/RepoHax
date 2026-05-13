@@ -128,7 +128,8 @@ namespace Cheat::Visuals
     X(LocKey_CURRENCY, L"CURRENCY", L"ДЕНЬГИ") \
     X(LocKey_Current, L"Current", L"Текущее") \
     X(LocKey_Set, L"Set", L"Установить") \
-    X(LocKey_CurrencyHint, L"e.g. 99999", L"например 99999")
+    X(LocKey_CurrencyHint, L"e.g. 99999", L"например 99999") \
+    X(LocKey_FreezeExtract, L"Freeze auto-extract", L"Заморозить экстракт")
 
     enum LocKey 
     {
@@ -1154,6 +1155,10 @@ namespace Cheat::Visuals
                 }
 
                Widgets::HorizontalLine(1_px);
+
+                Widgets::ToggleEx(HAX_LINE, GCheat->FreezeExtraction, g_Loc[LocKey_FreezeExtract], g_Loc[LocKey_HostOnly], {.Disabled = GCheat->IsClient});
+
+                Widgets::HorizontalLine(1_px);
 
                 RoundDirector dir = RoundDirector::instance();
                 bool disabled = !GCheat->IsInGame || !dir || dir.extractionPointActive();

@@ -88,6 +88,7 @@ namespace Cheat
         SafetyHookInline SpectateCamera_HeadEnergyLogic_Hook;
         SafetyHookInline EnemyRigidbody_FixedUpdate_Hook;
         SafetyHookInline ValuableDirector_CosmeticWorldObjectLevelLoopsClampedGet_Hook;
+        SafetyHookInline ExtractionPoint_StateSet_Hook;
 
         ID3D11RenderTargetView* RenderTarget;
         ID3D11Device* Device;
@@ -250,6 +251,8 @@ namespace Cheat
         bool SetCurrency;
         int CurrencyToSet;
         wchar_t CurrencyInputBuf[16] = {};
+
+        bool FreezeExtraction;
     };
 
     inline Context* GCheat;

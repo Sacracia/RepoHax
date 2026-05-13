@@ -909,6 +909,8 @@ struct ExtractionPoint : UnityEngine::MonoBehaviour
         s_OnClick.CallThunk<void, ExtractionPoint>(*this);
     }
 
+    METHOD(StateSet);
+
 private:
     METHOD(HaulGoalSet);
     METHOD(OnClick);
@@ -958,6 +960,7 @@ struct ExtractionPoint_State
     ENUM_VALUE(Complete);
     ENUM_VALUE(Active);
     ENUM_VALUE(Idle);
+    ENUM_VALUE(Success);
 };
 
 struct TruckSafetySpawnPoint : UnityEngine::MonoBehaviour
