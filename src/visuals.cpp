@@ -57,7 +57,8 @@ namespace Cheat::Visuals
     X(LocKey_MaxBatteryHead, L"Max battery", L"Полный заряд") \
     X(LocKey_VISUALS, L"VISUALS", L"ВИЗУАЛ") \
     X(LocKey_DisplayThroughWalls, L"Display through walls", L"Отображать через стены") \
-    X(LocKey_Within50m, L"Within 50 metres", L"В пределах 50 метров") \
+    X(LocKey_WithinSelectedDistance, L"Within selected distance", L"В пределах выбранной дистанции") \
+    X(LocKey_DisplayDistance, L"Display distance", L"Дистанция отображения") \
     X(LocKey_XrayHighlight, L"X-ray hightlight", L"Рентген подсветка") \
     X(LocKey_NotAllHighlighted, L"Some objects are not highlighted", L"Некоторые предметы не подсвечиваются") \
     X(LocKey_VALUE, L"VALUE", L"ЦЕНА") \
@@ -1108,7 +1109,15 @@ namespace Cheat::Visuals
             Widgets::PanelHeader(g_Loc[LocKey_VISUALS]);
             {
                 {
-                    Widgets::ToggleEx(HAX_LINE, GCheat->ValuablesEsp, g_Loc[LocKey_DisplayThroughWalls], g_Loc[LocKey_Within50m]);
+                    Widgets::ToggleEx(HAX_LINE, GCheat->ValuablesEsp, g_Loc[LocKey_DisplayThroughWalls], g_Loc[LocKey_WithinSelectedDistance]);
+                }
+
+                Widgets::HorizontalLine(1_px);
+
+                {
+                    Hax::char16 buf[16]{};
+                    swprintf_s(buf, _countof(buf), L"%dm", GCheat->ValuablesEspDistance);
+                    Widgets::SliderEx(HAX_LINE, g_Loc[LocKey_DisplayDistance], buf, &GCheat->ValuablesEspDistance, 5, 500, Widgets::SliderConvertInt);
                 }
 
                 Widgets::HorizontalLine(1_px);

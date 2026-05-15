@@ -182,6 +182,7 @@ namespace Cheat
         bool InfBattery;
 
         bool ValuablesEsp;
+        int ValuablesEspDistance = 50;
         Hax::TripleBuffer<Visuals::ValuableEspData> ValuablesEspBuffer{50};
 
         UnityEngine::AssetBundle Bundle;

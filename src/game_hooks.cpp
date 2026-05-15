@@ -1280,7 +1280,7 @@ namespace Cheat::GameHooks
 
         UnityEngine::Camera cam = GameDirector::instance().MainCamera();
         float dist = cam.GetTransform().GetPosition().Distance(obj.GetTransform().GetPosition());
-        if (dist < 2.f || dist > 50.f)
+        if (dist < 2.f || dist > (float)GCheat->ValuablesEspDistance)
             return {};
 
         PhysGrabObject physObject = obj.physGrabObject();

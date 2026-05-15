@@ -7,6 +7,15 @@ namespace Cheat
 {
     static void* Hooked_MonoRuntimeInvoke(UVM::Method* a1, void* a2, void* a3, void* a4);
 
+    static void IniFileRead_ValuablesEspDistance(void* data, const char* str)
+    {
+        int value = 50;
+        if (sscanf_s(str, "%d", &value) != 1)
+            value = 50;
+
+        *(int*)data = Hax::Clamp(value, 5, 500);
+    }
+
     static void RegisterConfig(Hax::IniFile& iniFile)
     {
         Hax::IniAddEntry(iniFile, "Cheat", "UseConsole",  &GCheat->UseConsole,  Hax::IniFileWrite_Bool, Hax::IniFileRead_Bool);
@@ -40,6 +49,7 @@ namespace Cheat
         Hax::IniAddEntry(iniFile, "Vision", "HeadMaxBattery", &GCheat->HeadMaxBattery, Hax::IniFileWrite_Bool, Hax::IniFileRead_Bool);
 
         Hax::IniAddEntry(iniFile, "Valuables", "ValuablesEsp", &GCheat->ValuablesEsp, Hax::IniFileWrite_Bool, Hax::IniFileRead_Bool);
+        Hax::IniAddEntry(iniFile, "Valuables", "ValuablesEspDistance", &GCheat->ValuablesEspDistance, Hax::IniFileWrite_Int, IniFileRead_ValuablesEspDistance);
         Hax::IniAddEntry(iniFile, "Valuables", "ItemsChams", &GCheat->ItemsChams, Hax::IniFileWrite_Bool, Hax::IniFileRead_Bool);
         Hax::IniAddEntry(iniFile, "Valuables", "Unbreakable", &GCheat->Unbreakable, Hax::IniFileWrite_Bool, Hax::IniFileRead_Bool);
         Hax::IniAddEntry(iniFile, "Valuables", "ExtractionPointsEsp", &GCheat->ExtrPointsEsp, Hax::IniFileWrite_Bool, Hax::IniFileRead_Bool);
