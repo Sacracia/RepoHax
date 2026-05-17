@@ -912,15 +912,22 @@ struct MetaManager : UnityEngine::MonoBehaviour
 
     inline operator bool() const { return !null(); }
 
-    void CosmeticUnlockAll()
+    bool CosmeticUnlockAll()
     {
         THROW_IF_NULL();
-        s_CosmeticUnlockAll.CallThunk<bool, MetaManager>(*this);
+        return s_CosmeticUnlockAll.CallThunk<bool, MetaManager>(*this);
+    }
+
+    void Reset()
+    {
+        THROW_IF_NULL();
+        s_Reset.CallThunk<void, MetaManager>(*this);
     }
 
     STATIC_FIELD(instance, MetaManager);
 private:
     METHOD(CosmeticUnlockAll);
+    METHOD(Reset);
 };
 
 static inline System::MethodInfo EventSystem_Update{{"UnityEngine.UI", "UnityEngine.EventSystems", "EventSystem"}, "Update"};

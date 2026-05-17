@@ -8,12 +8,17 @@
 #include <d3d11.h>
 #pragma comment(lib, "d3d11.lib")
 
+#include <shared_mutex>
+
 #include "haxsdk/unity/hax_unity.h"
 #include "safetyhook/safetyhook.hpp"
 
 #include "game_classes.h"
 #include "visuals.h"
 #include "resource.h"
+
+using present_t = HRESULT (__stdcall*)(IDXGISwapChain*,UINT,UINT);
+using resize_buffers_t = HRESULT (__stdcall*)(IDXGISwapChain*,UINT,UINT,UINT,DXGI_FORMAT,UINT);
 
 namespace Cheat
 {
@@ -40,8 +45,10 @@ namespace Cheat
         SafetyHookInline MonoRuntimeInvokeHook;
         SafetyHookInline LoadLibraryAHook;
         SafetyHookInline LoadLibraryWHook;
-        SafetyHookInline PresentHook;
-        SafetyHookInline ResizeBuffersHook;
+        //SafetyHookInline PresentHook;
+       // SafetyHookInline ResizeBuffersHook;
+        present_t PresentOrig;
+        resize_buffers_t ResizeBuffersOrig;
 
         SafetyHookInline SetCursorHook;
         SafetyHookInline GetRawInputDataHook;
@@ -58,6 +65,7 @@ namespace Cheat
         SafetyHookInline GetMessageWHook;
         SafetyHookInline TerminateProcessHook;
 
+        SafetyHookInline Application_Quit_Hook;
         SafetyHookInline EventSystem_Update_Hook;
         SafetyHookInline PlayerHealth_Hurt_Hook;
         SafetyHookInline PlayerAvatar_PlayerDeath_Hook;
@@ -94,6 +102,8 @@ namespace Cheat
 
         Hax::LogFile LogFile;
         Hax::IniFile IniFile = L"haxsdk.ini";
+
+        std::shared_mutex ShutdownMutex;
 
         HANDLE UnityLoadedEvent;
         HMODULE hCheat;
@@ -233,6 +243,9 @@ namespace Cheat
         size_t TotalBans;
 
         bool UnlockAllCosmetic;
+        bool ResetAllCosmetic;
+
+        UVM::Thread* UvmThread;
     };
 
     inline Context* GCheat;

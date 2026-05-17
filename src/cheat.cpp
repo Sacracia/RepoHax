@@ -68,6 +68,9 @@ namespace Cheat
         if (!Hax::Unity::IsUnityProcess())
             return false;
 
+        wchar_t buf[MAX_PATH]{};
+        ::GetModuleFileNameW(nullptr, buf, _countof(buf));
+
         GCheat = Hax::New<Context>();
         GCheat->hCheat = (HMODULE)hCheat;
 
@@ -77,6 +80,8 @@ namespace Cheat
 
         Hax::LogFile& logFile = GCheat->LogFile;
         Hax::InitLogFile(logFile, L"haxsdk_logs.txt", GCheat->UseConsole);
+
+        wprintf(L"%s\n", buf);
 
         Hax::Log(logFile, L"Waiting for unity virtual machine...");
         while (!Hax::Unity::GetUvmHandle())

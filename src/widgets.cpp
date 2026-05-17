@@ -372,9 +372,9 @@ namespace Cheat::Widgets
         return Hax::Gui::IsItemClicked(id);
     }
 
-    void Image(Hax::Gui::TextureHandle tex)
+    void Image(Hax::Gui::TextureHandle tex, Hax::Vector2 customSize)
     {
-        const Hax::Vector2 size = Hax::Gui::GetImageSize(tex);
+        const Hax::Vector2 size = (bool)customSize ? customSize : Hax::Gui::GetImageSize(tex);
 
         Hax::Rect bounds;
         bounds.Min = Hax::Gui::GetCursorPos();
@@ -534,9 +534,10 @@ namespace Cheat::Widgets
         bounds.Min = Hax::Gui::GetCursorPos();
         bounds.Max = bounds.Min + btnSize;
 
-        if (params.Icon.Srv != 0)
+        if (params.Icon != 0)
         {
-            bounds.Max.X += padding.X + (textSize.Y * ((float)params.Icon.Width / params.Icon.Height));
+            Hax::Vector2 iconSize = Hax::Gui::GetImageSize(params.Icon);
+            bounds.Max.X += padding.X + (textSize.Y * (iconSize.X / iconSize.Y));
             btnSize = bounds.GetSize();
         }
 
@@ -562,10 +563,12 @@ namespace Cheat::Widgets
         Hax::Gui::DrawRect(bounds.Min, bounds.Max, {.FillColor = bg, .Rounding = 5_px});
 
         Hax::Vector2 drawPos = bounds.Min + padding;
-        if (params.Icon.Srv != 0)
+        if (params.Icon != 0)
         {
+            Hax::Vector2 iconSize = Hax::Gui::GetImageSize(params.Icon);
+
             Hax::Vector2 iconBR;
-            iconBR.X = drawPos.X + textSize.Y * ((float)params.Icon.Width / params.Icon.Height);
+            iconBR.X = drawPos.X + textSize.Y * (iconSize.X / iconSize.Y);
             iconBR.Y = drawPos.Y + textSize.Y;
             Hax::Gui::DrawImage(params.Icon, drawPos, iconBR);
 

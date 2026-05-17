@@ -114,7 +114,8 @@ namespace Cheat::Visuals
     X(LocKey_Medium, L"Medium", L"Средняя") \
     X(LocKey_Large, L"Large", L"Большая") \
     X(LocKey_Unknown, L"Unknown", L"Неизвестное") \
-    X(LocKey_UnlockAll, L"Unlock all", L"Открыть все")
+    X(LocKey_UnlockAll, L"Unlock all", L"Открыть все")\
+    X(LocKey_ResetAll, L"Reset all", L"Сбросить все")
 
     enum LocKey 
     {
@@ -142,11 +143,11 @@ namespace Cheat::Visuals
 
     static size_t g_ActiveTab = 0;
     static size_t g_KeyListenerId = 0;
-    static Hax::Gui::Texture2D g_LogoTex;
+    static Hax::Gui::TextureHandle g_LogoTex;
 
     struct UpgradeData
     {
-        Hax::Gui::Texture2D Img;
+        Hax::Gui::TextureHandle Img;
         Hax::WStringView InternalNameEnd;
         LocKey Loc;
         bool AutoUse;
@@ -179,7 +180,7 @@ namespace Cheat::Visuals
 
     struct AidData
     {
-        Hax::Gui::Texture2D Img;
+        Hax::Gui::TextureHandle Img;
         Hax::WStringView InternalNameEnd;
         LocKey Loc;
     };
@@ -356,8 +357,22 @@ namespace Cheat::Visuals
         HAX_PANIC(result == S_OK, &GCheat->LogFile, L"D3D11CreateDeviceAndSwapChain %d", result);
 
         void** vtable = *(void***)(swapChain);
-        void* present = vtable[8];
-        void* resizeBuffers = vtable[13];
+        {
+            DWORD oldProtect;
+            BOOL ok = ::VirtualProtect(&vtable[8], sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProtect);
+            HAX_PANIC(ok == TRUE, &GCheat->LogFile, L"Present hook not installed");
+            GCheat->PresentOrig = (present_t)vtable[8];
+            vtable[8] = Hooked_Present;
+            VirtualProtect(&vtable[8], sizeof(void*), oldProtect, &oldProtect);
+        }
+        {
+            DWORD oldProtect;
+            BOOL ok = VirtualProtect(&vtable[13], sizeof(void*), PAGE_EXECUTE_READWRITE, &oldProtect);
+            HAX_PANIC(ok == TRUE, &GCheat->LogFile, L"ResizeBuffers hook not installed");
+            GCheat->ResizeBuffersOrig = (resize_buffers_t)vtable[13];
+            vtable[13] = Hooked_ResizeBuffers;
+            VirtualProtect(&vtable[13], sizeof(void*), oldProtect, &oldProtect);
+        }
 
         swapChain->Release();
         context->Release();
@@ -366,8 +381,8 @@ namespace Cheat::Visuals
         ::DestroyWindow(hwnd);
         ::UnregisterClass(dummyWindow.lpszClassName, dummyWindow.hInstance);
 
-        Cheat::Hook(present, Hooked_Present, GCheat->PresentHook, "Present");
-        Cheat::Hook(resizeBuffers, Hooked_ResizeBuffers, GCheat->ResizeBuffersHook, "ResizeBuffers");
+        //Cheat::Hook(present, Hooked_Present, GCheat->PresentHook, "Present");
+        //Cheat::Hook(resizeBuffers, Hooked_ResizeBuffers, GCheat->ResizeBuffersHook, "ResizeBuffers");
     }
 
     bool IsUpgrAutouse(void* assetName)
@@ -383,6 +398,17 @@ namespace Cheat::Visuals
 
     static LRESULT WINAPI Hooked_Present(IDXGISwapChain* swapChain, UINT syncInterval, UINT flags)
     {
+        std::shared_lock<std::shared_mutex> lock{GCheat->ShutdownMutex, std::try_to_lock};
+        if (!lock.owns_lock())
+        {
+            if (GCheat->UvmThread != nullptr)
+            {
+                UVM::ThreadDetach(*GCheat->UvmThread);
+                GCheat->UvmThread = nullptr;
+            }
+            return GCheat->PresentOrig(swapChain, syncInterval, flags);
+        }
+
         if (GCheat->Device == nullptr)
         {
             swapChain->GetDevice(IID_PPV_ARGS(&GCheat->Device));
@@ -438,7 +464,7 @@ namespace Cheat::Visuals
             Hax::LogError(GCheat->LogFile, L"%d: %ls", __LINE__, message ? message.begin() : L"Exception without message");
         }
 
-        HRESULT result = GCheat->PresentHook.call<HRESULT, IDXGISwapChain*, UINT, HRESULT>(swapChain, syncInterval, flags);
+        HRESULT result = GCheat->PresentOrig(swapChain, syncInterval, flags);
         return result;
     }
 
@@ -450,7 +476,7 @@ namespace Cheat::Visuals
             GCheat->RenderTarget = nullptr;
         }
 
-        return GCheat->ResizeBuffersHook.stdcall<HRESULT, IDXGISwapChain*, UINT, UINT, UINT, DXGI_FORMAT, UINT>(swapChain, a1, a2, a3, a4, a5);
+        return GCheat->ResizeBuffersOrig(swapChain, a1, a2, a3, a4, a5);
     }
 
     static void CreateRenderTarget(IDXGISwapChain* swapChain)
@@ -502,7 +528,7 @@ namespace Cheat::Visuals
         g_UpgradeInfo[(int)UpgradeType::Health].Img =   Hax::Gui::LoadImageFromMemory(Hax::Gui::GetResourceData(hCheat, IDB_PNG14, L"PNG"));
         g_UpgradeInfo[(int)UpgradeType::Map].Img =      Hax::Gui::LoadImageFromMemory(Hax::Gui::GetResourceData(hCheat, IDB_PNG15, L"PNG"));
 
-        Hax::Gui::Texture2D tex = Hax::Gui::LoadImageFromMemory(Hax::Gui::GetResourceData(hCheat, IDB_PNG7, L"PNG"));
+        Hax::Gui::TextureHandle tex = Hax::Gui::LoadImageFromMemory(Hax::Gui::GetResourceData(hCheat, IDB_PNG7, L"PNG"));
         g_UpgradeInfo[(int)UpgradeType::Climb].Img    = tex;
         g_UpgradeInfo[(int)UpgradeType::Battery].Img  = tex;
         g_UpgradeInfo[(int)UpgradeType::N].Img        = tex;
@@ -511,7 +537,7 @@ namespace Cheat::Visuals
         g_AidInfo[(int)AidType::Medium].Img =   Hax::Gui::LoadImageFromMemory(Hax::Gui::GetResourceData(hCheat, IDB_PNG5, L"PNG"));
         g_AidInfo[(int)AidType::Large].Img =    Hax::Gui::LoadImageFromMemory(Hax::Gui::GetResourceData(hCheat, IDB_PNG4, L"PNG"));
 
-        UVM::ThreadAttach();
+        GCheat->UvmThread = &UVM::ThreadAttach();
 
         ToggleMenuVisibility();
     }
@@ -538,14 +564,11 @@ namespace Cheat::Visuals
 
                 // Logo
                 {
-                    Hax::Gui::Texture2D shrinkedLogo = g_LogoTex;
-                    shrinkedLogo.Width = (int)(Hax::Gui::Scale(g_LogoTex.Width / 2.f));
-                    shrinkedLogo.Height = (int)(Hax::Gui::Scale(g_LogoTex.Height / 2.f));
-
                     Hax::Gui::BeginHorizontal();
                     {
-                        Hax::Gui::Space((sidePanelWidth - shrinkedLogo.Width) / 2.f);
-                        Widgets::Image(shrinkedLogo);
+                        Hax::Vector2 customSize = Hax::Gui::GetImageSize(g_LogoTex) / 2.f;
+                        Hax::Gui::Space((sidePanelWidth - customSize.X) / 2.f);
+                        Widgets::Image(g_LogoTex, customSize);
                     }
                     Hax::Gui::EndHorizontal();
                 }
@@ -1400,8 +1423,15 @@ namespace Cheat::Visuals
             Widgets::BeginPanel(HAX_LINE);
             Widgets::PanelHeader(g_Loc[LocKey_COSMETICS]);
             {
-                if (Widgets::Button(HAX_LINE, g_Loc[LocKey_UnlockAll], {}, {.MinW = Hax::Gui::GetContentRegionAvail().X}))
-                    GCheat->UnlockAllCosmetic = true;
+                Hax::Gui::BeginHorizontal(5_px);
+                {
+                    const float btnW = (Hax::Gui::GetContentRegionAvail().X - 5_px) / 2.f;
+                    if (Widgets::Button(HAX_LINE, g_Loc[LocKey_UnlockAll], {}, {.MinW = btnW}))
+                        GCheat->UnlockAllCosmetic = true;
+                    if (Widgets::Button(HAX_LINE, g_Loc[LocKey_ResetAll], {}, {.MinW = btnW}))
+                        GCheat->ResetAllCosmetic = true;
+                }
+                Hax::Gui::EndHorizontal();
             }
             Widgets::EndPanel();
         }

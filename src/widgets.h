@@ -51,7 +51,7 @@ namespace Cheat
         Hax::Vector2 CalcButtonSize(Hax::WStringView label);
         float CalcButtonHeight();
         bool Button(size_t id, Hax::WStringView label, Hax::WStringView desc = {}, const ButtonParams& params = {});
-        void Image(Hax::Gui::TextureHandle tex);
+        void Image(Hax::Gui::TextureHandle tex, Hax::Vector2 customSize = {});
         bool TabButton(size_t id, Hax::WStringView text, Hax::char16 icon16, bool active);
         void BeginPanel(size_t id);
         void EndPanel();

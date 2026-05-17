@@ -332,6 +332,12 @@ namespace Cheat::GameHooks
                 MetaManager::instance().CosmeticUnlockAll();
             }
 
+            if (GCheat->ResetAllCosmetic && MetaManager::instance())
+            {
+                GCheat->ResetAllCosmetic = false;
+                MetaManager::instance().Reset();
+            }
+
             /*for (size_t i = 0; i < GCheat->LoadRequests.size(); ++i)
             {
             LoadRequest* req = GCheat->LoadRequests[i];
