@@ -47,8 +47,8 @@ namespace Cheat::WinHooks
         HookModuleProc(user32, "GetMessageW", Hooked_GetMessageW, GCheat->GetMessageWHook);
         HookModuleProc(user32, "GetMessageW", Hooked_GetMessageW, GCheat->GetMessageWHook);
 
-        /*HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
-        HookModuleProc(kernel32, "TerminateProcess", Hooked_TerminateProcess, GCheat->TerminateProcessHook);*/
+        HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
+        HookModuleProc(kernel32, "TerminateProcess", Hooked_TerminateProcess, GCheat->TerminateProcessHook);
     }
 
     static HCURSOR WINAPI Hooked_SetCursor(HCURSOR icon)
@@ -215,7 +215,7 @@ namespace Cheat::WinHooks
     static BOOL Hooked_TerminateProcess(HANDLE handle, UINT exitCode)
     {
         std::unique_lock<std::shared_mutex> lock{GCheat->ShutdownMutex};
-        UVM::ThreadDetach(*GCheat->UvmThread);
+        //UVM::ThreadDetach(*GCheat->UvmThread);
         Hax::Log(GCheat->LogFile, L"Saving ini...");
         Hax::IniSave(GCheat->IniFile);
 

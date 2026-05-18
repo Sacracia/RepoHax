@@ -213,7 +213,6 @@ namespace Cheat::Visuals
 
     void RegisterConfig(Hax::IniFile& iniFile)
     {
-        constexpr const char* section = "UpgradeAutoUse";
         static const char* names[(int)UpgradeType::N] =
         {
             "CrouchRest",
@@ -231,7 +230,7 @@ namespace Cheat::Visuals
         };
 
         for (int i = 0; i < (int)UpgradeType::N; ++i)
-            Hax::IniAddEntry(iniFile, section, names[i], &g_UpgradeInfo[i].AutoUse, Hax::IniFileWrite_Bool, Hax::IniFileRead_Bool);
+            Hax::IniAddEntry(iniFile, "UpgradeAutoUse", names[i], &g_UpgradeInfo[i].AutoUse, Hax::IniFileWrite_Bool, Hax::IniFileRead_Bool);
     }
 
     enum VerticalAlignment : int 
@@ -272,7 +271,6 @@ namespace Cheat::Visuals
     static void DrawExtrPointEsp(ExtrPointEspData& data);
     static void DrawTruckEsp(TruckEspData& data);
     static void DrawPlayerEsp(PlayerEspData& data);
-    //static void CornerBox(float x, float y, float width, float height, const Hax::Gui::Color& color, float thickness, float cornerProp);
     static void Box(const Hax::Rect& rect, const Hax::Gui::Color& col);
     static void VertHealthBar(float x, float y, float width, float height, float cur, float max);
     static void VertHealthBar(float x, float y, float width, float height, int cur, int max);
@@ -280,12 +278,12 @@ namespace Cheat::Visuals
     static float IconFontSize();
 
     static void Text(Hax::Gui::FontHandle hFont,
-        Hax::WStringView text,
-        const Hax::Vector2& pos,
-        const Hax::Gui::Color& col,
-        float fontSize,
-        VerticalAlignment vAlign = VerticalAlignment_Bottom,
-        HorizontalAlignment hAlign = HorizontalAlignment_Right);
+                     Hax::WStringView text,
+                     Hax::Vector2 pos,
+                     Hax::Gui::Color col,
+                     float fontSize,
+                     VerticalAlignment vAlign = VerticalAlignment_Bottom,
+                     HorizontalAlignment hAlign = HorizontalAlignment_Right);
 
     static bool IsPlayerAlive();
     static bool IsPlayerFullHp();
@@ -1553,10 +1551,10 @@ namespace Cheat::Visuals
         Text(GCheat->NunitoSans_Bold, data.Name, Hax::Vector2(data.Box.GetCenter().X, data.Box.Min.Y - 2.f), 0xFFFFFFFF, fontH, VerticalAlignment_Top, HorizontalAlignment_Center);
         VertHealthBar(data.Box.Min.X - 10.f, data.Box.Min.Y, 3.f, data.Box.GetSize().Y, data.CurHp, data.MaxHp);
 
-        wchar_t buf[16] = {0};
-        swprintf_s(buf, L"%d", data.CurHp);
-        Hax::Gui::Color lerped = Hax::Lerp(Hax::Gui::Color(0xFF0000FF), Hax::Gui::Color(0x00FF00FF), (float)data.CurHp / data.MaxHp);
-        Text(GCheat->NunitoSans_Bold, buf, Hax::Vector2(data.Box.Min.X - 15.f, data.Box.Min.Y), lerped, fontH, VerticalAlignment_Bottom, HorizontalAlignment_Left);
+        Hax::Gui::Color lerped = Hax::Lerp(0xFF0000FF, Hax::Gui::Color(0x00FF00FF), (float)data.CurHp / data.MaxHp);
+        Hax::WStringBuilder<16> sb;
+        sb.AppendF(L"%d", data.CurHp);
+        Text(GCheat->NunitoSans_Bold, sb.View(), Hax::Vector2(data.Box.Min.X - 15.f, data.Box.Min.Y), lerped, fontH, VerticalAlignment_Bottom, HorizontalAlignment_Left);
     }
 
     static void DrawValuableEsp(ValuableEspData& data)
@@ -1597,62 +1595,41 @@ namespace Cheat::Visuals
         {
             VertHealthBar(data.Box.Min.X - 10_px, data.Box.Min.Y, 3_px, data.Box.GetSize().Y, data.CurHp, data.MaxHp);
 
-            wchar_t buf[16] = {};
-            swprintf_s(buf, L"%d", data.CurHp);
             Hax::Gui::Color lerped = Hax::Lerp(Hax::Gui::Color(0xFF0000FF), Hax::Gui::Color(0x00FF00FF), (float)data.CurHp / data.MaxHp);
-            Text(GCheat->NunitoSans_Bold, buf, Hax::Vector2(data.Box.Min.X - 15_px, data.Box.Min.Y), lerped, EspFontSize(), VerticalAlignment_Bottom, HorizontalAlignment_Left);
+            Hax::WStringBuilder<16> sb;
+            sb.AppendF(L"%d", data.CurHp);
+            Text(GCheat->NunitoSans_Bold, sb.View(), Hax::Vector2(data.Box.Min.X - 15_px, data.Box.Min.Y), lerped, EspFontSize(), VerticalAlignment_Bottom, HorizontalAlignment_Left);
         }
     }
 
-    /*static void CornerBox(float x, float y, float width, float height, const Hax::Gui::Color& color, float thickness, float cornerProp)
-    {
-        float yOffset = height * cornerProp;
-        float xOffset = width * cornerProp;
-        float px2 = 2_px;
-
-        Hax::Vector2 tl = {x, y};
-        Hax::Vector2 tr = {x + width, y};
-        Hax::Vector2 br = {x + width, y + height};
-        Hax::Vector2 bl = {x, y + height};
-
-        Hax::Gui::DrawLine(tl, tr, {.FillColor = 0x000000FF, .Th = 3_px});
-        Hax::Gui::DrawLine(tr, br, {.FillColor = 0x000000FF, .Th = 3_px});
-        Hax::Gui::DrawLine(bl, br, {.FillColor = 0x000000FF, .Th = 3_px});
-        Hax::Gui::DrawLine(tl, bl, {.FillColor = 0x000000FF, .Th = 3_px});
-
-        Hax::Gui::DrawLine(tl, tr, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
-        Hax::Gui::DrawLine(tr, br, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
-        Hax::Gui::DrawLine(bl, br, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
-        Hax::Gui::DrawLine(tl, bl, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
-    }*/
-
     static void Box(const Hax::Rect& rect, const Hax::Gui::Color& col)
     {
-        float px2 = 2_px;
+        float px1 = 1_px;
+        float px3 = 3_px;
 
         Hax::Vector2 tl = rect.GetTL();
         Hax::Vector2 tr = rect.GetTR();
         Hax::Vector2 br = rect.GetBR();
         Hax::Vector2 bl = rect.GetBL();
 
-        Hax::Gui::DrawLine(tl, tr, {.FillColor = 0x000000FF, .Th = 3_px});
-        Hax::Gui::DrawLine(tr, br, {.FillColor = 0x000000FF, .Th = 3_px});
-        Hax::Gui::DrawLine(bl, br, {.FillColor = 0x000000FF, .Th = 3_px});
-        Hax::Gui::DrawLine(tl, bl, {.FillColor = 0x000000FF, .Th = 3_px});
+        Hax::Gui::DrawLine(tl, tr, {.FillColor = 0x000000FF, .Th = px3});
+        Hax::Gui::DrawLine(tr, br, {.FillColor = 0x000000FF, .Th = px3});
+        Hax::Gui::DrawLine(bl, br, {.FillColor = 0x000000FF, .Th = px3});
+        Hax::Gui::DrawLine(tl, bl, {.FillColor = 0x000000FF, .Th = px3});
 
-        Hax::Gui::DrawLine(tl, tr, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
-        Hax::Gui::DrawLine(tr, br, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
-        Hax::Gui::DrawLine(bl, br, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
-        Hax::Gui::DrawLine(tl, bl, {.FillColor = Hax::Gui::Color::Red, .Th = 1_px});
+        Hax::Gui::DrawLine(tl, tr, {.FillColor = col, .Th = px1});
+        Hax::Gui::DrawLine(tr, br, {.FillColor = col, .Th = px1});
+        Hax::Gui::DrawLine(bl, br, {.FillColor = col, .Th = px1});
+        Hax::Gui::DrawLine(tl, bl, {.FillColor = col, .Th = px1});
     }
 
     static void Text(Hax::Gui::FontHandle hFont,
-        Hax::WStringView text,
-        const Hax::Vector2& pos,
-        const Hax::Gui::Color& col,
-        float fontSize,
-        VerticalAlignment vAlign,
-        HorizontalAlignment hAlign)
+                     Hax::WStringView text,
+                     Hax::Vector2 pos,
+                     Hax::Gui::Color col,
+                     float fontSize,
+                     VerticalAlignment vAlign,
+                     HorizontalAlignment hAlign)
     {
         Hax::Vector2 textSize = Hax::Gui::CalcTextSize(hFont, text, fontSize);
         float xShift = hAlign == HorizontalAlignment_Right ? 0.f : textSize.X / (float)hAlign;

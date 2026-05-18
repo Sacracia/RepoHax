@@ -63,13 +63,10 @@ namespace Cheat
         Visuals::RegisterConfig(iniFile);
     }
 
-    bool Initialize(void* hCheat)
+    void Initialize(void* hCheat)
     {
         if (!Hax::Unity::IsUnityProcess())
-            return false;
-
-        wchar_t buf[MAX_PATH]{};
-        ::GetModuleFileNameW(nullptr, buf, _countof(buf));
+            return;
 
         GCheat = Hax::New<Context>();
         GCheat->hCheat = (HMODULE)hCheat;
@@ -81,8 +78,6 @@ namespace Cheat
         Hax::LogFile& logFile = GCheat->LogFile;
         Hax::InitLogFile(logFile, L"haxsdk_logs.txt", GCheat->UseConsole);
 
-        wprintf(L"%s\n", buf);
-
         Hax::Log(logFile, L"Waiting for unity virtual machine...");
         while (!Hax::Unity::GetUvmHandle())
             Sleep(200);
@@ -91,16 +86,12 @@ namespace Cheat
             HANDLE hEvent = ::CreateEvent(0, TRUE, FALSE, nullptr);
             HAX_ASSERT(hEvent != nullptr);
 
-            // To verify the unity is fully loaded, I wait for the first Update method to be called
             GCheat->UnityLoadedEvent = hEvent;
             HookModuleProc((HMODULE)Hax::Unity::GetUvmHandle(), "mono_runtime_invoke", Hooked_MonoRuntimeInvoke, GCheat->MonoRuntimeInvokeHook);
 
             Hax::Log(logFile, L"Waiting for unity...");
             ::WaitForSingleObject(hEvent, INFINITE);
             ::CloseHandle(hEvent);
-
-            GCheat->MonoRuntimeInvokeHook.reset();
-            GCheat->UnityLoadedEvent = nullptr;
         }
 
         Hax::Unity::Initialize(&logFile);
@@ -111,8 +102,6 @@ namespace Cheat
 
         Cheat::Visuals::InitializeMenu((Hax::Handle)hDirectX11);
         Cheat::GameHooks::Install();
-
-        return true;
     }
 
     void Hook(void* ptr, void* detour, SafetyHookInline& out, const char* name)
@@ -132,11 +121,17 @@ namespace Cheat
 
     static void* Hooked_MonoRuntimeInvoke(UVM::Method* a1, void* a2, void* a3, void* a4)
     {
-        void* ret = GCheat->MonoRuntimeInvokeHook.unsafe_fastcall<void*, void*, void*, void*, void*>(a1, a2, a3, a4);
+        void* ret = GCheat->MonoRuntimeInvokeHook.unsafe_ccall<void*, void*, void*, void*, void*>(a1, a2, a3, a4);
 
-        Hax::StringView methodName = UVM::MethodGetName(*a1);
-        if (methodName == "Update")
-            ::SetEvent(GCheat->UnityLoadedEvent);
+        if (GCheat->UnityLoadedEvent != nullptr)
+        {
+            Hax::StringView methodName = UVM::MethodGetName(*a1);
+            if (methodName == "Update")
+            {
+                ::SetEvent(GCheat->UnityLoadedEvent);
+                GCheat->UnityLoadedEvent = nullptr;
+            }
+        }
 
         return ret;
     }

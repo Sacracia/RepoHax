@@ -22,7 +22,7 @@ using resize_buffers_t = HRESULT (__stdcall*)(IDXGISwapChain*,UINT,UINT,UINT,DXG
 
 namespace Cheat
 {
-    bool Initialize(void* hCheat);
+    void Initialize(void* hCheat);
     void Hook(void* ptr, void* detour, SafetyHookInline& out, const char* name);
     void HookModuleProc(HMODULE module, LPCSTR procName, void* procHook, SafetyHookInline& out);
 
@@ -104,6 +104,7 @@ namespace Cheat
         Hax::IniFile IniFile = L"haxsdk.ini";
 
         std::shared_mutex ShutdownMutex;
+        std::shared_mutex RuntimeInvokeMutex;
 
         HANDLE UnityLoadedEvent;
         HMODULE hCheat;
