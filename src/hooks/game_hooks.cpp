@@ -44,6 +44,7 @@ namespace Cheat
     static void* GetPlayerLoopPtr(System::Type type, System::Type subType);
     static void Heal(PhysGrabObjectImpactDetector obj, float value);
     static void SpawnItem(Item item);
+    static void SpawnCosmeticBox(int rarity);
     static void ParseEnemies();
     static void ParseItems();
     static void ParseLevels();
@@ -352,6 +353,13 @@ namespace Cheat
             {
                 G->ResetAllCosmetic = false;
                 MetaManager::instance().Reset();
+            }
+
+            if (G->RarityToSpawn > 0)
+            {
+                int rarity = G->RarityToSpawn;
+                G->RarityToSpawn = 0;
+                SpawnCosmeticBox(rarity - 1);
             }
         }
         catch (System::Exception& ex)
@@ -670,6 +678,22 @@ namespace Cheat
                             }
                         }
                         G->PlayersEspBuffer.RefreshSpare();
+                    }
+
+                    if (G->CosmeticBoxesEsp)
+                    {
+                        auto& back = G->CosmeticBoxesEspBuffer.GetBack();
+                        back.Clear();
+                        if (RoundDirector dir = RoundDirector::instance())
+                        {
+                            for (CosmeticWorldObject box : dir.cosmeticWorldObjects())
+                            {
+                                Hax::Optional<CosmeticBoxEspData> data = ParseCosmeticBoxEspData(box);
+                                if (data.HasValue())
+                                    back.PushBack(*data);
+                            }
+                        }
+                        G->CosmeticBoxesEspBuffer.RefreshSpare();
                     }
                 }
             }
@@ -1060,18 +1084,40 @@ namespace Cheat
         if (!item)
             return;
 
+        UnityEngine::Transform transform = camera.GetTransform();
+        UnityEngine::Vector3 pos = transform.GetPosition() + transform.GetForward() * 2.f - transform.GetUp();
+
         if (SemiFunc::IsMasterClient())
-        {
-            UnityEngine::Transform transform = camera.GetTransform();
-            UnityEngine::Vector3 pos = transform.GetPosition() + transform.GetForward() - transform.GetUp();
             Photon::PhotonNetwork::InstantiateRoomObject(item.prefab().resourcePath(), pos, UnityEngine::Quaternion::identity());
-        }
         if (!SemiFunc::IsMultiplayer())
-        {
-            UnityEngine::Transform transform = camera.GetTransform();
-            UnityEngine::Vector3 pos = transform.GetPosition() + transform.GetForward() * 2.f - transform.GetUp();
             UnityEngine::Object::Instantiate<UnityEngine::GameObject>(item.prefab().Prefab(), pos, UnityEngine::Quaternion::identity());
-        }
+    }
+
+    static void SpawnCosmeticBox(int rarity)
+    {
+        UnityEngine::Camera camera = SemiFunc::MainCamera();
+        if (!camera)
+            return;
+
+        ValuableDirector dir = ValuableDirector::instance();
+        if (!dir)
+            return;
+
+        auto setups = dir.cosmeticWorldObjectSetups();
+        if (!setups || rarity < 1 || rarity >= setups.GetCount())
+            return;
+
+        CosmeticWorldObjectSetup setup = setups[rarity];
+        if (!setup || !setup.prefab())
+            return;
+
+        UnityEngine::Transform transform = camera.GetTransform();
+        UnityEngine::Vector3 pos = transform.GetPosition() + transform.GetForward() * 2.f - transform.GetUp();
+
+        if (GameManager::instance().gameMode() == 0)
+            UnityEngine::Object::Instantiate<UnityEngine::GameObject>(setup.prefab().Prefab(), pos, UnityEngine::Quaternion::identity());
+        else
+            Photon::PhotonNetwork::InstantiateRoomObject(setup.prefab().resourcePath(), pos, UnityEngine::Quaternion::identity());
     }
 
     static void ParseEnemies()

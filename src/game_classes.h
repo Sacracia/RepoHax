@@ -764,6 +764,18 @@ private:
     METHOD(Discover);
 };
 
+struct CosmeticWorldObjectSetup : System::Object
+{
+    META("Assembly-CSharp", "", "ValuableDirector/CosmeticWorldObjectSetup");
+
+    CosmeticWorldObjectSetup() : System::Object(nullptr) {}
+    CosmeticWorldObjectSetup(UVM::Object* ptr) : System::Object(ptr) {}
+
+    inline operator bool() const { return !null(); }
+
+    FIELD(prefab, PrefabRef);
+};
+
 struct ValuableDirector : UnityEngine::MonoBehaviour
 {
     META("Assembly-CSharp", "", "ValuableDirector");
@@ -775,6 +787,7 @@ struct ValuableDirector : UnityEngine::MonoBehaviour
 
     STATIC_FIELD(instance, ValuableDirector);
     FIELD(valuableList, System::List<ValuableObject>);
+    FIELD(cosmeticWorldObjectSetups, System::List<CosmeticWorldObjectSetup>);
 };
 
 struct ItemGun : UnityEngine::MonoBehaviour
@@ -847,6 +860,18 @@ private:
     METHOD(OnClick);
 };
 
+struct CosmeticWorldObject : UnityEngine::MonoBehaviour
+{
+    META("Assembly-CSharp", "", "CosmeticWorldObject");
+
+    CosmeticWorldObject() : UnityEngine::MonoBehaviour(nullptr) {}
+    CosmeticWorldObject(UVM::Object* ptr) : UnityEngine::MonoBehaviour(ptr) {}
+
+    inline operator bool() const { return !null(); }
+
+    FIELD(rarity, int);
+};
+
 struct RoundDirector : UnityEngine::MonoBehaviour
 {
     META("Assembly-CSharp", "", "RoundDirector");
@@ -866,6 +891,7 @@ struct RoundDirector : UnityEngine::MonoBehaviour
     FIELD(extractionPointActive, bool);
     FIELD(extractionPointCurrent, ExtractionPoint);
     FIELD(extractionPointList, System::List<UnityEngine::GameObject>);
+    FIELD(cosmeticWorldObjects, System::List<CosmeticWorldObject>);
 
 private:
     METHOD(ExtractionPointsUnlock);

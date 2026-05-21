@@ -104,6 +104,10 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">src/pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">src/pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="src\overlay\menu\tabs\cosmetic_tabs.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">src/pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">src/pch.h</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="src\overlay\overlay.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">src/pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">src/pch.h</PrecompiledHeaderFile>

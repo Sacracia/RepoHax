@@ -21,18 +21,18 @@ namespace Cheat
         Hax::Gui::BeginVertical(spacing);
         Hax::Gui::Dummy({0.f, 0.f});
         {
-            BeginPanel(HAX_LINE);
+            BeginPanel(LINE_ID);
             PanelHeader(G->Loc[LocKey_GUNS]);
             {
                 {
                     bool enabled = !G->IsClient;
-                    ToggleEx(HAX_LINE, G->InfBattery, G->Loc[LocKey_MaxBatteryGun], G->Loc[LocKey_HostOnly], {.Disabled = !enabled});
+                    ToggleEx(LINE_ID, G->InfBattery, G->Loc[LocKey_MaxBatteryGun], G->Loc[LocKey_HostOnly], {.Disabled = !enabled});
                 }
 
                 HorizontalLine(1_px);
 
                 {
-                    ToggleEx(HAX_LINE, G->UseLaser, G->Loc[LocKey_LaserCrosshair]);
+                    ToggleEx(LINE_ID, G->UseLaser, G->Loc[LocKey_LaserCrosshair]);
                 }
             }
             EndPanel();
@@ -47,7 +47,7 @@ namespace Cheat
         Hax::Gui::BeginVertical(spacing);
         Hax::Gui::Dummy({0.f, 0.f});
         {
-            BeginPanel(HAX_LINE);
+            BeginPanel(LINE_ID);
             PanelHeader(G->Loc[LocKey_SPAWN], G->Loc[LocKey_AvailableIfHost]);
             {
                 static size_t s_SelectedItem;
@@ -66,7 +66,7 @@ namespace Cheat
                         if (s_SelectedItem < nItems)
                             preview = G->ItemsPool.begin()[s_SelectedItem].key;
 
-                        if (DropdownBtn(HAX_LINE, preview, dropListW))
+                        if (DropdownBtn(LINE_ID, preview, dropListW))
                             OpenPopup(dropListId, Hax::Gui::GetCursorPos());
                     }
                     Hax::Gui::EndVertical();
@@ -77,7 +77,7 @@ namespace Cheat
                     {
                         for (size_t i = 0; i < nItems; ++i)
                         {
-                            if (Selectable(HAX_LINE + i * 10000, G->ItemsPool.begin()[i].key, s_SelectedItem == i, {.MinW = dropListW}))
+                            if (Selectable(LINE_ID + i * 10000, G->ItemsPool.begin()[i].key, s_SelectedItem == i, {.MinW = dropListW}))
                             {
                                 s_SelectedItem = i;
                                 ClosePopup(dropListId);
@@ -87,7 +87,7 @@ namespace Cheat
                     }
 
                     bool enabled = !G->IsClient && s_SelectedItem < G->ItemsPool.Size() && G->IsInGame;
-                    if (Button(HAX_LINE, G->Loc[LocKey_Spawn], {}, {.Enabled = enabled}))
+                    if (Button(LINE_ID, G->Loc[LocKey_Spawn], {}, {.Enabled = enabled}))
                         G->ItemToSpawn = (StatsManager::instance().itemDictionary().begin() + s_SelectedItem)->Value;
                 }
                 Hax::Gui::EndHorizontal();

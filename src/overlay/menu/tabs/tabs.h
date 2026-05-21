@@ -10,4 +10,5 @@ namespace Cheat
     void DrawLevelTab();
     void DrawMiscTab();
     void DrawSettingsTab();
+    void DrawCosmeticTab();
 }

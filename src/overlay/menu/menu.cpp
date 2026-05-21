@@ -21,11 +21,12 @@ namespace Cheat
     static const Tab g_Tabs[] = 
     {
         {DrawStatsTab, LocKey_Stats, L'\ue473'},
-        {DrawEntitiesTab, LocKey_Entities, L'\uf544'},
+        {DrawEntitiesTab, LocKey_Entities, L'\uf8f5'},
         {DrawVisionTab, LocKey_Vision, L'\uf06e'},
         {DrawValuablesTab, LocKey_Valuables, L'\uf81d'},
         {DrawItemsTab, LocKey_Items, L'\uf1e2'},
         {DrawLevelTab, LocKey_Level, L'\uf5fd'},
+        {DrawCosmeticTab, LocKey_Cosmetic, L'\ue136'},
         {DrawMiscTab, LocKey_Misc, L'\uf86d'},
         {DrawSettingsTab, LocKey_Settings, L'\uf013'}
     };
@@ -131,7 +132,7 @@ namespace Cheat
                             Hax::Gui::HorizontalLine(1_px, 0x2F3033FF);
                             Hax::Gui::Space(7_px);
 
-                            for (size_t i = 3; i < 7; ++i)
+                            for (size_t i = 3; i < 8; ++i)
                                 if (TabButton(HAX_LINE + i, G->Loc[g_Tabs[i].Loc], g_Tabs[i].Icon, g_ActiveTab == i))
                                     g_ActiveTab = i;
 
@@ -139,8 +140,8 @@ namespace Cheat
                             Hax::Gui::HorizontalLine(1_px, 0x2F3033FF);
                             Hax::Gui::Space(7_px);
 
-                            if (TabButton(HAX_LINE + 7, G->Loc[g_Tabs[7].Loc], g_Tabs[7].Icon, g_ActiveTab == 7))
-                                g_ActiveTab = 7;
+                            if (TabButton(HAX_LINE + 8, G->Loc[g_Tabs[8].Loc], g_Tabs[8].Icon, g_ActiveTab == 8))
+                                g_ActiveTab = 8;
                         }
                         Hax::Gui::EndVertical();
                     }

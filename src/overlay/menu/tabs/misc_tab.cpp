@@ -39,21 +39,6 @@ namespace Cheat
                 }
             }
             EndPanel();
-
-            BeginPanel(LINE_ID);
-            PanelHeader(G->Loc[LocKey_COSMETICS]);
-            {
-                Hax::Gui::BeginHorizontal(5_px);
-                {
-                    const float btnW = (Hax::Gui::GetContentRegionAvail().X - 5_px) / 2.f;
-                    if (Button(LINE_ID, G->Loc[LocKey_UnlockAll], {}, {.MinW = btnW}))
-                        G->UnlockAllCosmetic = true;
-                    if (Button(LINE_ID, G->Loc[LocKey_ResetAll], {}, {.MinW = btnW}))
-                        G->ResetAllCosmetic = true;
-                }
-                Hax::Gui::EndHorizontal();
-            }
-            EndPanel();
         }
         Hax::Gui::Dummy({0.f, 0.f});
         Hax::Gui::EndVertical();

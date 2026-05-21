@@ -81,8 +81,12 @@ X(LocKey_MaxBatteryGun, L"Max battery", L"Максимальная батаре�
 X(LocKey_LaserCrosshair, L"Laser crosshair", L"Лазерный прицел") \
 X(LocKey_SPAWN, L"SPAWN", L"СПАВН") \
 X(LocKey_TRUCK, L"TRUCK", L"ФУРГОН") \
-X(LocKey_COSMETICS, L"COSMETICS", L"КОСМЕТИКА") \
 X(LocKey_TeleportTruck, L"Teleport to truck", L"Телепортироваться в фургон") \
+X(LocKey_Cosmetic, L"Cosmetic", L"Косметика") \
+X(LocKey_Common, L"Common", L"Обычная") \
+X(LocKey_Uncommon, L"Uncommon", L"Необычная") \
+X(LocKey_Rare, L"Rare", L"Редкая") \
+X(LocKey_UltraRare, L"Ultra rare", L"Очень редкая") \
 X(LocKey_SETTINGS, L"SETTINGS", L"НАСТРОЙКИ") \
 X(LocKey_Language, L"Language", L"Язык") \
 X(LocKey_Hotkey, L"Hotkey", L"Горячая клавиша") \

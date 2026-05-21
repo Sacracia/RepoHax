@@ -87,6 +87,9 @@
     <ClCompile Include="src\overlay\overlay.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="src\overlay\menu\tabs\cosmetic_tabs.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="third_party\haxsdk\gui\hax_gui.h">

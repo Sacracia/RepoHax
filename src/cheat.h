@@ -13,6 +13,7 @@ namespace Cheat
     enum class UpgradeType : int { Rest, Jump, Range, Speed, Stamina, Strength, Tumble, Wings, Health, Map, Climb, Battery, N };
     enum class AidType { Small, Medium, Large, N };
     enum class ChatPref { None = -1, Alive = 0, Dead = 1 };
+    enum class CosmeticRarity { Common, Uncommon, Rare, UltraRare, N };
 
     struct UpgradeData
     {
@@ -150,6 +151,8 @@ namespace Cheat
         // Cosmetics
         bool                                UnlockAllCosmetic;
         bool                                ResetAllCosmetic;
+        bool                                CosmeticBoxesEsp;
+        int                                 RarityToSpawn;
 
         // Misc
         bool                                TruckEsp;
@@ -198,6 +201,8 @@ namespace Cheat
         Hax::TripleBuffer<ExtrPointEspData> ExtrPointsEspBuffer{10};
         Hax::TripleBuffer<TruckEspData>     TruckEspBuffer{2};
         Hax::TripleBuffer<PlayerEspData>    PlayersEspBuffer{6};
+        Hax::TripleBuffer<CosmeticBoxEspData> CosmeticBoxesEspBuffer{20};
+
 
         // Misc
         UVM::Thread*                        UvmThread;

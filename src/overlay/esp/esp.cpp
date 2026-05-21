@@ -25,6 +25,7 @@ namespace Cheat
     static void DrawExtrPointEsp(ExtrPointEspData& data);
     static void DrawTruckEsp(TruckEspData& data);
     static void DrawPlayerEsp(PlayerEspData& data);
+    static void DrawCosmeticBoxEsp(CosmeticBoxEspData& data);
     static void Box(const Hax::Rect& rect, const Hax::Gui::Color& col);
     static void Text(Hax::Gui::FontHandle hFont,
                      Hax::WStringView text,
@@ -50,12 +51,14 @@ namespace Cheat
         size_t i3 = 9999;
         size_t i4 = 9999;
         size_t i5 = 9999;
+        size_t i6 = 9999;
 
         Hax::Vector<EnemyEspData>& buf1 = G->EnemiesEspBuffer.GetFront();
         Hax::Vector<ValuableEspData>& buf2 = G->ValuablesEspBuffer.GetFront();
         Hax::Vector<ExtrPointEspData>& buf3 = G->ExtrPointsEspBuffer.GetFront();
         Hax::Vector<TruckEspData>& buf4 = G->TruckEspBuffer.GetFront();
         Hax::Vector<PlayerEspData>& buf5 = G->PlayersEspBuffer.GetFront();
+        Hax::Vector<CosmeticBoxEspData>& buf6 = G->CosmeticBoxesEspBuffer.GetFront();
 
         if (G->EnemiesEsp)
         {
@@ -78,21 +81,30 @@ namespace Cheat
             std::sort(buf5.begin(), buf5.end(), [](const PlayerEspData& d1, const PlayerEspData& d2) { return d1.Distance > d2.Distance; });
         }
         if (G->TruckEsp)
+        {
             i4 = 0;
+        }
+        if (G->CosmeticBoxesEsp)
+        {
+            i6 = 0;
+            std::sort(buf6.begin(), buf6.end(), [](const CosmeticBoxEspData& d1, const CosmeticBoxEspData& d2) { return d1.Distance > d2.Distance; });
+        }
 
-        while (i1 < buf1.Size() || i2 < buf2.Size() || i3 < buf3.Size() || i4 < buf4.Size() || i5 < buf5.Size())
+        while (i1 < buf1.Size() || i2 < buf2.Size() || i3 < buf3.Size() || i4 < buf4.Size() || i5 < buf5.Size() || i6 < buf6.Size())
         {
             float d1 = i1 < buf1.Size() ? buf1[i1].Distance : FLT_MIN;
             float d2 = i2 < buf2.Size() ? buf2[i2].Distance : FLT_MIN;
             float d3 = i3 < buf3.Size() ? buf3[i3].Distance : FLT_MIN;
             float d4 = i4 < buf4.Size() ? buf4[i4].Distance : FLT_MIN;
             float d5 = i5 < buf5.Size() ? buf5[i5].Distance : FLT_MIN;
+            float d6 = i6 < buf6.Size() ? buf6[i6].Distance : FLT_MIN;
 
-            if (d1 >= d2 && d1 >= d3 && d1 >= d4 && d1 >= d5)       { DrawEnemyEsp(buf1[i1++]);     }
-            else if (d2 >= d1 && d2 >= d3 && d2 >= d4 && d2 >= d5)  { DrawValuableEsp(buf2[i2++]);  }
-            else if (d3 >= d1 && d3 >= d2 && d3 >= d4 && d3 >= d5)  { DrawExtrPointEsp(buf3[i3++]); }
-            else if (d4 >= d1 && d4 >= d2 && d4 >= d3 && d4 >= d5)  { DrawTruckEsp(buf4[i4++]);     }
-            else                                                    { DrawPlayerEsp(buf5[i5++]);    }
+            if (d1 >= d2 && d1 >= d3 && d1 >= d4 && d1 >= d5 && d1 >= d6)       { DrawEnemyEsp(buf1[i1++]);     }
+            else if (d2 >= d1 && d2 >= d3 && d2 >= d4 && d2 >= d5 && d2 >= d6)  { DrawValuableEsp(buf2[i2++]);  }
+            else if (d3 >= d1 && d3 >= d2 && d3 >= d4 && d3 >= d5 && d3 >= d6)  { DrawExtrPointEsp(buf3[i3++]); }
+            else if (d4 >= d1 && d4 >= d2 && d4 >= d3 && d4 >= d5 && d4 >= d6)  { DrawTruckEsp(buf4[i4++]);     }
+            else if (d5 >= d1 && d5 >= d2 && d5 >= d3 && d5 >= d4 && d5 >= d6)  { DrawPlayerEsp(buf5[i5++]);    }
+            else                                                                { DrawCosmeticBoxEsp(buf6[i6++]); }
         }
     }
 
@@ -326,6 +338,38 @@ namespace Cheat
         };
     }
 
+    Hax::Optional<CosmeticBoxEspData> ParseCosmeticBoxEspData(CosmeticWorldObject box)
+    {
+        UnityEngine::Camera cam = GameDirector::instance().MainCamera();
+
+        if (!box || !cam)
+            return {};
+
+        UnityEngine::Vector3 worldPos = box.GetTransform().GetPosition();
+
+        float dist = cam.GetTransform().GetPosition().Distance(worldPos);
+        if (dist < 1.f)
+            return {};
+
+        UnityEngine::Vector3 screenPos = cam.WorldToScreenPoint(worldPos);
+        UnityEngine::Rect screenRect{0.f, 0.f, G->ScreenWidth, G->ScreenHeight};
+        if (screenPos.z <= 0 || !screenRect.Contains(screenPos))
+            return {};
+
+        float scaleX = G->ScreenWidth / G->PixelWidth;
+        float scaleY = G->ScreenHeight / G->PixelHeight;
+
+        screenPos.x *= scaleX;
+        screenPos.y = G->ScreenHeight - screenPos.y * scaleY;
+
+        return CosmeticBoxEspData
+        {
+            .Pos = screenPos.ToVector2().ToHax(),
+            .Distance = dist,
+            .Rarity = box.rarity()
+        };
+    }
+
     static void DrawEnemyEsp(EnemyEspData& data)
     {
         float fontH = 9_px;
@@ -383,6 +427,13 @@ namespace Cheat
             sb.AppendF(L"%d", data.CurHp);
             Text(G->NunitoSans_Bold, sb.View(), Hax::Vector2(data.Box.Min.X - 15_px, data.Box.Min.Y), lerped, EspFontSize(), VerticalAlignment_Bottom, HorizontalAlignment_Left);
         }
+    }
+
+    static void DrawCosmeticBoxEsp(CosmeticBoxEspData& data)
+    {
+        static Hax::Array<Hax::Gui::Color, 4> s_RarityToColor = {0x7FFF00FF, 0x57A0D3FF, 0xF81894FF, 0xE6CC00FF};
+
+        Text(G->Icons_Solid, L"\uF553", data.Pos, s_RarityToColor[data.Rarity], IconFontSize());
     }
 
     static void Box(const Hax::Rect& rect, const Hax::Gui::Color& col)
