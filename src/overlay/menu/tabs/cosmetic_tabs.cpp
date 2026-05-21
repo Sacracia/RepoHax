@@ -24,7 +24,7 @@ namespace Cheat
             BeginPanel(LINE_ID);
             PanelHeader(G->Loc[LocKey_GENERAL]);
             {
-                ToggleEx(LINE_ID, G->CosmeticBoxesEsp, G->Loc[LocKey_DisplayThroughWalls]);
+                ToggleEx(LINE_ID, G->CosmeticBoxesEsp, G->Loc[LocKey_DisplayBoxesThroughWalls]);
 
                 HorizontalLine(1_px);
 

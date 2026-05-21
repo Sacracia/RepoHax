@@ -47,6 +47,7 @@ X(LocKey_DEADHEAD, L"DEAD HEAD", L"МЕРТВАЯ ГОЛОВА") \
 X(LocKey_MaxBatteryHead, L"Max battery", L"Полный заряд") \
 X(LocKey_VISUALS, L"VISUALS", L"ВИЗУАЛ") \
 X(LocKey_DisplayThroughWalls, L"Display through walls", L"Отображать через стены") \
+X(LocKey_DisplayBoxesThroughWalls, L"Display boxes through walls", L"Отображать ящики через стены") \
 X(LocKey_WithinSelectedDistance, L"Within selected distance", L"В пределах выбранной дистанции") \
 X(LocKey_DisplayDistance, L"Display distance", L"Дистанция отображения") \
 X(LocKey_XrayHighlight, L"X-ray hightlight", L"Рентген подсветка") \

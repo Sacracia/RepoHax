@@ -62,6 +62,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp23</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -81,6 +82,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp23</LanguageStandard>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalIncludeDirectories>$(SolutionDir)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
