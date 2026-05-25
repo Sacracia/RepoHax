@@ -826,8 +826,15 @@ struct StatsManager : UnityEngine::MonoBehaviour
 
     inline operator bool() const { return !null(); }
 
+    void LoadItemsFromFolder()
+    {
+        THROW_IF_NULL();
+        s_LoadItemsFromFolder.CallThunk<void, StatsManager>(*this);
+    }
+
     STATIC_FIELD(instance, StatsManager);
     FIELD(itemDictionary, System::Dictionary<System::String COMMA Item>);
+    METHOD(LoadItemsFromFolder);
 };
 
 struct ExtractionPoint : UnityEngine::MonoBehaviour

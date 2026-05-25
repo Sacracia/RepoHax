@@ -434,21 +434,28 @@ namespace UVM
 
     Method* ClassTryFindMethod(Class& klass, const char* name, const char* sig)
     {
-        void* iter = nullptr;
-        while (Method* method = ClassGetMethods(klass, &iter))
+        Class* currentClass = &klass;
+        do
         {
-            const char* methodName = MethodGetName(*method);
-            if (strcmp(methodName, name) == 0)
+            void* iter = nullptr;
+            while (Method* method = ClassGetMethods(*currentClass, &iter))
             {
-                if (!sig || !sig[0])
-                    return method;
+                const char* methodName = MethodGetName(*method);
+                if (strcmp(methodName, name) == 0)
+                {
+                    if (!sig || !sig[0])
+                        return method;
 
-                Hax::StringBuilder<256> sb;
-                GetMethodSignature(*method, sb);
-                if (strcmp(sb.CStr(), sig) == 0)
-                    return method;
+                    Hax::StringBuilder<256> sb;
+                    GetMethodSignature(*method, sb);
+                    if (strcmp(sb.CStr(), sig) == 0)
+                        return method;
+                }
             }
-        }
+
+            currentClass = ClassGetParent(*currentClass);
+        } while (currentClass != nullptr);
+
         return nullptr;
     }
 
@@ -474,6 +481,12 @@ namespace UVM
     {
         static uint8_t*(*s_ApiProc)(VTable&) = (decltype(s_ApiProc))GetVMProc("mono_vtable_get_static_field_data");
         return s_ApiProc(ClassGetVTable(klass));
+    }
+
+    Class* ClassGetParent(Class& klass)
+    {
+        static Class*(*s_ApiProc)(Class&) = (decltype(s_ApiProc))GetVMProc("mono_class_get_parent");
+        return s_ApiProc(klass);
     }
 
     void* MethodGetPointer(Method& method)

@@ -1165,6 +1165,11 @@ namespace Cheat
         if (StatsManager manager = StatsManager::instance())
         {
             auto itemDict = manager.itemDictionary();
+            int nItems = itemDict.Count();
+
+            if (nItems == 0)
+                manager.LoadItemsFromFolder();
+
             for (int i = 0; i < itemDict.Count(); ++i)
             {
                 auto entry = itemDict.begin() + i;
