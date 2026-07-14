@@ -108,9 +108,6 @@
     <ClCompile Include="third_party\haxsdk\unity\hax_unity.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="third_party\haxsdk\unity\hax_unity_uvm.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="third_party\haxsdk\gui\hax_gui.h">
@@ -177,9 +174,6 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="third_party\haxsdk\unity\modules\hax_unity_physics2d.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="third_party\haxsdk\unity\hax_unity_uvm.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

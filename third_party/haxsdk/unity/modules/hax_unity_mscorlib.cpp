@@ -1,3 +1,4 @@
+#define HAX_UNITY_INCLUDE_UVM
 #include "hax_unity_mscorlib.h"
 
 #define WIN32_LEAN_AND_MEAN
@@ -5,16 +6,13 @@
 #include <TlHelp32.h>
 #include <bit>
 
-#include "../hax_unity_uvm.h"
-
-#undef GetMessage
-
 namespace Hax::Unity
 {
     extern Hax::LogFile* g_Logger;
     extern bool g_ICallsReturnHandle;
 }
 
+// Classes
 namespace System
 {
     Type Int32::typeof()
@@ -631,5 +629,242 @@ namespace System
     {
         static Type s_Type = Type::GetType("mscorlib", "System.Collections.Generic", "Dictionary`2", true);
         return s_Type;
+    }
+}
+
+// Requests
+namespace System
+{
+    struct TypeRequest 
+    { 
+        const char *Assembly;
+        const char *Namespace;
+        const char *Name; 
+        Type* Out; 
+    };
+
+    struct MethodRequest 
+    { 
+        Type* Type; 
+        const char *Name;
+        const char *Sig; 
+        MethodInfo* Out; 
+    };
+
+    struct MethodWrapperRequest 
+    { 
+        Type* Type; 
+        const char *Name;
+        const char *Sig; 
+        int Flags; 
+        MethodInfoWrapper* Out; 
+    };
+
+    struct FieldOffsetRequest 
+    { 
+        Type* Type; 
+        const char* Name; 
+        Int32* Out; 
+    };
+
+    struct StaticFieldRequest 
+    { 
+        Type* Type; 
+        const char* Name; 
+        IntPtr* Out; 
+    };
+
+    struct EnumRequest 
+    { 
+        Type* Type; 
+        const char* Name; 
+        UInt32* Out; 
+    };
+
+    static Hax::Vector<System::TypeRequest>& GetTypeRequests()
+    {
+        static Hax::Vector<System::TypeRequest> s_Vector;
+        return s_Vector;
+    }
+
+    static Hax::Vector<System::MethodRequest>& GetMethodRequests()
+    {
+        static Hax::Vector<System::MethodRequest> s_Vector;
+        return s_Vector;
+    }
+
+    static Hax::Vector<System::MethodWrapperRequest>& GetMethodWrapperRequests()
+    {
+        static Hax::Vector<System::MethodWrapperRequest> s_Vector;
+        return s_Vector;
+    }
+
+    static Hax::Vector<System::FieldOffsetRequest>& GetFieldOffsetRequests()
+    {
+        static Hax::Vector<System::FieldOffsetRequest> s_Vector;
+        return s_Vector;
+    }
+
+    static Hax::Vector<System::StaticFieldRequest>& GetStaticFieldRequests()
+    {
+        static Hax::Vector<System::StaticFieldRequest> s_Vector;
+        return s_Vector;
+    }
+
+    static Hax::Vector<System::EnumRequest>& GetEnumRequests()
+    {
+        static Hax::Vector<System::EnumRequest> s_Vector;
+        return s_Vector;
+    }
+
+    void HandleMetadataRequests()
+    {
+        for (TypeRequest& request : GetTypeRequests())
+            *request.Out = System::Type::GetType(request.Assembly, request.Namespace, request.Name, true);
+        for (MethodRequest& request : GetMethodRequests())
+            *request.Out = request.Type->GetMethod(request.Name, request.Sig, true);
+        for (MethodWrapperRequest& request : GetMethodWrapperRequests())
+            *request.Out = request.Type->GetMethod(request.Name, request.Sig, true).Wrap(request.Flags);
+        for (FieldOffsetRequest& request : GetFieldOffsetRequests())
+            *request.Out = request.Type->GetField(request.Name, true).GetFieldOffset();
+        for (StaticFieldRequest& request : GetStaticFieldRequests())
+            *request.Out = request.Type->GetField(request.Name, true).GetStaticAddress();
+        for (EnumRequest& request : GetEnumRequests())
+        {
+            System::FieldInfo field = request.Type->GetField(request.Name, true);
+            HAX_ASSERT(field.IsLiteral());
+            field.GetStaticValue(request.Out);
+        }
+    }
+
+    TypeRequest& RequestType(const char* assembly, const char* namespaze, const char* name)
+    {
+        auto& requests = GetTypeRequests();
+        requests.PushBack(TypeRequest{.Assembly = assembly,
+            .Namespace = namespaze, 
+            .Name = name});
+        return requests.Last();
+    }
+
+    MethodRequest& RequestMethod(System::Type& type, const char* name, const char* sig)
+    {
+        auto& requests = GetMethodRequests();
+        requests.PushBack(MethodRequest{.Type = &type,
+            .Name = name,
+            .Sig = sig});
+        return requests.Last();
+    }
+
+    MethodWrapperRequest& RequestMethodWrapper(System::Type& type, const char* name, const char* sig, int flags)
+    {
+        auto& requests = GetMethodWrapperRequests();//!
+        requests.PushBack(MethodWrapperRequest{.Type = &type,
+            .Name = name,
+            .Sig = sig,
+            .Flags = flags});
+        return requests.Last();
+    }
+
+    FieldOffsetRequest& RequestFieldOffset(System::Type& type, const char* name)
+    {
+        auto& requests = GetFieldOffsetRequests();
+        requests.PushBack(FieldOffsetRequest{.Type = &type,
+            .Name = name});
+        return requests.Last();
+    }
+
+    StaticFieldRequest& RequestStaticField(System::Type& type, const char* name)
+    {
+        auto& requests = GetStaticFieldRequests();
+        requests.PushBack(StaticFieldRequest{.Type = &type,
+            .Name = name});
+        return requests.Last();
+    }
+
+    EnumRequest& RequestEnum(System::Type& type, const char* name)
+    {
+        auto& requests = GetEnumRequests();
+        requests.PushBack(EnumRequest{.Type = &type,
+            .Name = name});
+        return requests.Last();
+    }
+
+
+    Int32::Int32(FieldOffsetRequest& req)
+    {
+        req.Out = this;
+    }
+
+    UInt32::UInt32(EnumRequest& req) 
+    { 
+        req.Out = this; 
+    }
+
+    IntPtr::IntPtr(StaticFieldRequest& req) 
+    { 
+        req.Out = this;
+    }
+
+    Type::Type(System::TypeRequest& req) : Object(null) 
+    { 
+        req.Out = this;
+    }
+
+    MethodInfo::MethodInfo(MethodRequest& req) : Object(null) 
+    { 
+        req.Out = this; 
+    }
+
+    MethodInfoWrapper::MethodInfoWrapper(MethodWrapperRequest& req) 
+    { 
+        req.Out = this; 
+    }
+}
+
+// Internal
+namespace System::Internal
+{
+    Hax::Vector<void*> g_BoxesPool;
+
+    void* UvmMethodGetThunk(void* uvmMethod)
+    {
+        return uvm_method_get_unmanaged_thunk((UvmMethod*)uvmMethod);
+    }
+
+    void* UvmMethodGetAddress(void* uvmMethod)
+    {
+        return uvm_method_get_pointer((UvmMethod*)uvmMethod);
+    }
+
+    void* Invoke(void* method, void* __this, void** args, void** ex)
+    {
+        return uvm_runtime_invoke((UvmMethod*)method, __this, args, ex);
+    }
+
+    void GCSetField(const System::Object& __this, const System::Object* field, const System::Object& value)
+    {
+        uvm_gc_wbarrier_set_field(std::bit_cast<const UvmObject*>(__this), std::bit_cast<UvmObject**>(field), std::bit_cast<UvmObject*>(value));
+    }
+
+    size_t CreateBoxPool(Type type)
+    {
+        g_BoxesPool.Reserve(HAX_UNITY_BOX_POOL_SIZE * 25);
+        size_t poolOffset = g_BoxesPool.Size();
+
+        UvmClass* klass = uvm_class_from_system_type(std::bit_cast<UvmReflectionType*>(type));
+
+        for (size_t i = 0; i < HAX_UNITY_BOX_POOL_SIZE; ++i)
+        {
+            UvmObject* object = uvm_object_new(klass);
+            uvm_gchandle_new(object, true);
+            g_BoxesPool.PushBack(object);
+        }
+
+        return poolOffset;
+    }
+
+    void* GetBoxedObject(size_t index)
+    {
+        return g_BoxesPool[index];
     }
 }

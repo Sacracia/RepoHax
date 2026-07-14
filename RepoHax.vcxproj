@@ -180,10 +180,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="third_party\haxsdk\unity\hax_unity_uvm.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="third_party\haxsdk\unity\modules\hax_unity_ai.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -234,7 +230,6 @@
     <ClInclude Include="third_party\haxsdk\gui\hax_gui_dx11.h" />
     <ClInclude Include="third_party\haxsdk\hax.h" />
     <ClInclude Include="third_party\haxsdk\unity\hax_unity.h" />
-    <ClInclude Include="third_party\haxsdk\unity\hax_unity_uvm.h" />
     <ClInclude Include="third_party\haxsdk\unity\modules\hax_unity_ai.h" />
     <ClInclude Include="third_party\haxsdk\unity\modules\hax_unity_core.h" />
     <ClInclude Include="third_party\haxsdk\unity\modules\hax_unity_mscorlib.h" />

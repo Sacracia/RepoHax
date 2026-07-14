@@ -37,6 +37,13 @@ namespace System
     struct UInt32;
     struct IntPtr;
 
+    struct TypeRequest;
+    struct MethodRequest;
+    struct MethodWrapperRequest;
+    struct FieldOffsetRequest;
+    struct StaticFieldRequest;
+    struct EnumRequest;
+
     template <typename T = void>
     HAX_UNITY_ICLASS Array;
 
@@ -71,81 +78,121 @@ namespace System
     template <IsValType T>
     class Boxed;
 
+    template <typename T>
+    concept IsBoxable = HAX_UNITY_IS_MONO && IsValType<T> && !IsBuiltInValType<T>;
+
+    namespace Internal
+    {
+        void*   UvmMethodGetThunk(void* uvmMethod);
+        void*   UvmMethodGetAddress(void* uvmMethod);
+        void*   Invoke(void* method, void* __this, void** args, void** ex);
+        void    GCSetField(const System::Object& __this, const System::Object* field, const System::Object& value);
+        size_t  CreateBoxPool(System::Type type);
+        void*   GetBoxedObject(size_t index);
+    }
+}
+
+namespace System
+{
     struct Boolean
     {
-        Boolean(bool val) : Value(val) {}
-        static Type typeof();
-        operator bool() const { return Value; }
-        bool Value;
+                                Boolean(bool val) : Value(val) {}
+
+        static Type             typeof();
+
+                                operator bool() const { return Value; }
+
+        bool                    Value;
     };
 
     struct Byte
     {
-        Byte(uint8_t val) : Value(val) {}
-        static Type typeof();
-        operator uint8_t() const { return Value; }
-        uint8_t Value;
+                                Byte(uint8_t val) : Value(val) {}
+
+        static Type             typeof();
+
+                                operator uint8_t() const { return Value; }
+
+        uint8_t                 Value;
     };
 
     struct Char
     {
-        Char(wchar_t val) : Value(val) {}
-        static Type typeof();
-        operator wchar_t() const { return Value; }
-        wchar_t Value;
+                                Char(wchar_t val) : Value(val) {}
+
+        static Type             typeof();
+
+                                operator wchar_t() const { return Value; }
+
+        wchar_t                 Value;
     };
 
     struct Double
     {
-        Double(double val) : Value(val) {}
-        static Type typeof();
-        operator double() const { return Value; }
-        double Value;
+                                Double(double val) : Value(val) {}
+
+        static Type             typeof();
+
+                                operator double() const { return Value; }
+
+        double                  Value;
     };
 
     struct Single
     {
-        Single(float val) : Value(val) {}
-        static Type typeof();
-        operator float() const { return Value; }
-        float Value;
+                                Single(float val) : Value(val) {}
+
+        static Type             typeof();
+
+                                operator float() const { return Value; }
+
+        float                   Value;
     };
 
     struct Int32
     {
-        Int32(Hax::Unity::FieldOffsetRequest& req) { req.Out = this; }
-        Int32(int32_t val) : Value(val) {}
-        static Type typeof();
-        operator int32_t() const { return Value; }
-        int32_t Value;
+                                Int32(FieldOffsetRequest& req);
+                                Int32(int32_t val) : Value(val) {}
+
+        static Type             typeof();
+
+                                operator int32_t() const { return Value; }
+
+        int32_t                 Value;
     };
 
     struct UInt32
     {
-        UInt32(Hax::Unity::EnumRequest& req) { req.Out = this; }
-        UInt32(uint32_t val) : Value(val) {}
-        static Type typeof();
-        operator uint32_t() const { return Value; }
-        uint32_t Value;
+                                UInt32(EnumRequest& req);
+                                UInt32(uint32_t val) : Value(val) {}
+
+        static Type             typeof();
+
+                                operator uint32_t() const { return Value; }
+
+        uint32_t                Value;
     };
 
     struct IntPtr
     {
-        IntPtr(Hax::Unity::StaticFieldRequest& req) { req.Out = this; }
-        IntPtr(void* val) : Value(val) {}
-        static Type typeof();
-        operator void*() const { return Value; }
-        void* Value;
+                                IntPtr(StaticFieldRequest& req);
+                                IntPtr(void* val) : Value(val) {}
+
+        static Type             typeof();
+
+                                operator void*() const { return Value; }
+        
+        void*                   Value;
     };
 
     struct GCHandle
     {
-        GCHandle(void* v) : Handle(v) {}
+                                GCHandle(void* v) : Handle(v) {}
 
-        static GCHandle Alloc(Object obj, bool pinned);
-        void Free();
+        static GCHandle         Alloc(Object obj, bool pinned);
+        void                    Free();
 
-        void* Handle;
+        void*                   Handle;
     };
 
     template <IsValType T>
@@ -234,7 +281,7 @@ namespace System
         using Object::Object;
         using Object::GetType;
 
-                                Type(Hax::Unity::TypeRequest& req) : Object(nullptr) { req.Out = this; }
+                                Type(TypeRequest& req);
 
         static Type             typeof();
         static Type             GetType(const char* assembly, const char* namespaze, const char* name, bool assertOnError = false);
@@ -425,12 +472,12 @@ namespace System
     Boxed<T> Box(const T& val)
     {
         if (!Boxed<T>::s_PoolOffset.HasValue())
-            Boxed<T>::s_PoolOffset = Hax::Unity::Internal::CreateBoxPool(T::typeof());
+            Boxed<T>::s_PoolOffset = Internal::CreateBoxPool(T::typeof());
 
         size_t& poolOffset = Boxed<T>::s_PoolOffset.Value();
         size_t& poolIndex = Boxed<T>::s_PoolIndex;
 
-        Boxed<T> obj = std::bit_cast<Boxed<T>>(Hax::Unity::Internal::GetBoxedObject(poolOffset + poolIndex));
+        Boxed<T> obj = std::bit_cast<Boxed<T>>(Internal::GetBoxedObject(poolOffset + poolIndex));
         poolIndex = (poolIndex + 1) % HAX_UNITY_BOX_POOL_SIZE;
 
         obj.SetValue(val);
@@ -442,12 +489,12 @@ namespace System
     Boxed<T> Box()
     {
         if (!Boxed<T>::s_PoolOffset.HasValue())
-            Boxed<T>::s_PoolOffset = Hax::Unity::Internal::CreateBoxPool(T::typeof());
+            Boxed<T>::s_PoolOffset = Internal::CreateBoxPool(T::typeof());
 
         size_t& poolOffset = Boxed<T>::s_PoolOffset.Value();
         size_t& poolIndex = Boxed<T>::s_PoolIndex;
 
-        Boxed<T> obj = std::bit_cast<Boxed<T>>(Hax::Unity::Internal::GetBoxedObject(poolOffset + poolIndex));
+        Boxed<T> obj = std::bit_cast<Boxed<T>>(Internal::GetBoxedObject(poolOffset + poolIndex));
         poolIndex = (poolIndex + 1) % HAX_UNITY_BOX_POOL_SIZE;
 
         return obj;
@@ -489,12 +536,20 @@ namespace System
 
     struct MethodInfoWrapper;
 
+    enum MethodInfoWrapperFlags
+    {
+        Address = 1 << 0,
+        Thunk = 1 << 1,
+        ICall = 1 << 2,
+        Each = (1 << 3) - 1
+    };
+
     class MethodInfo : public Object
     {
     public:
         using Object::Object;
 
-                                MethodInfo(Hax::Unity::MethodRequest& req) : Object(null) { req.Out = this; }
+                                MethodInfo(MethodRequest& req);
 
         static Type             typeof();
 
@@ -528,34 +583,33 @@ namespace System
 
     struct MethodInfoWrapper
     {
-        MethodInfoWrapper() = default;
-        MethodInfoWrapper(Hax::Unity::MethodWrapperRequest& req) { req.Out = this; }
+                                MethodInfoWrapper() = default;
+                                MethodInfoWrapper(MethodWrapperRequest& req);
 
-        template <typename RetT, typename... Args>
-        RetT Call(Args... args);
+                                template <typename RetT, typename... Args>
+                                RetT Call(Args... args);
 
-        template <typename RetT, typename... Args>
-        RetT InternalCall(Args... args);
+                                template <typename RetT, typename... Args>
+                                RetT InternalCall(Args... args);
 
-        MethodInfo Method = null;
-        void* Address;
-        void* Thunk;
-        void* ICall;
-        uint32_t Flags;
-        uint32_t ImplFlags;
+        MethodInfo              Method = null;
+        void*                   Address;
+        void*                   Thunk;
+        void*                   ICall;
+        uint32_t                Flags;
+        uint32_t                ImplFlags;
 
     private:
-        struct MonoError 
+        struct MonoError
         {
-            union
-            {
-                uint32_t init;
+            union 
+            { 
+                uint32_t        Init;
                 struct
-                {
-                    uint16_t error_code;
-                    uint16_t private_flags;
-                    void* hidden_1[30];
-                };
+                { 
+                    uint16_t    ErrorCode, Flags;
+                    void*       Hidden[30];
+                }; 
             };
         };
     };
@@ -623,72 +677,47 @@ namespace System
     template <typename TKey, typename TValue>
     struct KeyValuePair
     {
-        static Type typeof() 
-        { 
-            if (s_Type == null)
-            {
-                Type baseType = Type::GetType("mscorlib", "System.Collections.Generic", "KeyValuePair`2", true);
-                s_Type = baseType.MakeGenericType({TKey::typeof(), TValue::typeof()}); 
-            }
+        static Type             typeof();
 
-            return s_Type;
-        }
-
-        const TKey Key;
-        const TValue Val;
-
-    private:
-        static inline Type s_Type = null;
+        const TKey              Key;
+        const TValue            Val;
     };
 
     template <IsDotNetType T>
     HAX_UNITY_ICLASS List<T> : public Object, public IEnumerable<T>
     {
-        struct Fields { void* Object[2]; Array<T> Items; int Size; int Version; };
+        struct Fields 
+        { 
+            void*               Object[2];
+            Array<T>            Items;
+            int                 Size;
+            int                 Version;
+        };
 
     public:
         using Object::Object;
 
                                 List(std::initializer_list<T> iniList);
 
-        static List<T>          New()               { return Activator::CreateInstanceDefaultCtor<List<T>>(); }
+        static List<T>          New()                           { return Activator::CreateInstanceDefaultCtor<List<T>>(); }
         static List<T>          New(IEnumerable<T>& o);
 
         void                    Add(const T& item);
 
-        static Type             typeof()            { static Type s_Type = List<>::typeof().MakeGenericType({T::typeof()}); return s_Type; }
+        static Type             typeof()                        { static Type s_Type = List<>::typeof().MakeGenericType({T::typeof()}); return s_Type; }
 
-        const T&                operator[](size_t i) const  { THROW_IF_NULL(); Fields* f = (Fields*)m_Ptr; THROW_IF_GE(i, f->Size); return begin()[i]; }
+        const T&                operator[](size_t i) const      { THROW_IF_NULL(); Fields* f = (Fields*)m_Ptr; THROW_IF_GE(i, f->Size); return begin()[i]; }
 
-        const T*                begin() const       { THROW_IF_NULL(); Fields* f = (Fields*)m_Ptr; return (T*)&f->Items.m_UvmArray->Elements; }
-        const T*                end() const         { THROW_IF_NULL(); Fields* f = (Fields*)m_Ptr; return (T*)&f->Items.m_UvmArray->Elements + f->Size; }
-
-        int                     Count() const       { THROW_IF_NULL(); return ((Fields*)m_Ptr)->Size; }
-        int                     Capacity() const    { THROW_IF_NULL(); return ((Fields*)m_Ptr)->Items.Length(); }
-
+        const T*                begin() const                   { THROW_IF_NULL(); Fields* f = (Fields*)m_Ptr; return (T*)&f->Items.m_UvmArray->Elements; }
+        const T*                end() const                     { THROW_IF_NULL(); Fields* f = (Fields*)m_Ptr; return (T*)&f->Items.m_UvmArray->Elements + f->Size; }
         T*                      begin() requires IsValType<T>   { THROW_IF_NULL(); Fields* f = (Fields*)m_Ptr; return (T*)&f->Items.m_UvmArray->Elements; }
         T*                      end() requires IsValType<T>     { THROW_IF_NULL(); Fields* f = (Fields*)m_Ptr; return (T*)&f->Items.m_UvmArray->Elements + f->Size; }
+
+        int                     Count() const                   { THROW_IF_NULL(); return ((Fields*)m_Ptr)->Size; }
+        int                     Capacity() const                { THROW_IF_NULL(); return ((Fields*)m_Ptr)->Items.Length(); }
         
-        T   GetValue(size_t i) const 
-        { 
-            THROW_IF_NULL();
-            
-            Fields* fields = (Fields*)m_Ptr; 
-            
-            THROW_IF_GE(i, (size_t)fields->Size); 
-            return *((T*)&fields->Items.GetValue(i));  
-        }
-
-        void SetValue(const T& val, size_t i) const 
-        { 
-            THROW_IF_NULL(); 
-
-            Fields* fields = (Fields*)m_Ptr; 
-            THROW_IF_GE(i, fields->Size);
-            
-            fields->Items.SetValue(val, i);
-            fields->Version++;
-        }
+        T                       GetValue(size_t i) const;
+        void                    SetValue(const T& val, size_t i) const;
     };
 
     template <>
@@ -700,13 +729,7 @@ namespace System
         static Type             typeof();
     };
 
-    template <typename T>
-    concept IsBoxable = HAX_UNITY_IS_MONO && IsValType<T> && !IsBuiltInValType<T>;
-
-    template <typename T>
-    concept IsDictType = IsRefType<T> || IsBuiltInValType<T>;
-
-    template <IsDictType TKey, IsDictType TValue>
+    template <IsDictParam TKey, IsDictParam TValue>
     HAX_UNITY_ICLASS Dictionary<TKey, TValue> : public Object, public IEnumerable<KeyValuePair<TKey, TValue>>
     {
     public:
@@ -726,30 +749,46 @@ namespace System
 
     private:
 
-        struct Entry { static Type typeof() { return null; } int Hash; int Next; TKey Key; TValue Value; };
-        struct Fields { void* Object[2]; void* Buckets; Array<Entry> Entries; int Count; /*...*/ };
+        struct Entry 
+        { 
+            static Type         typeof() { return null; } 
+            
+            int                 Hash; 
+            int                 Next; 
+            TKey                Key; 
+            TValue              Value; 
+        };
+
+        struct Fields 
+        { 
+            void*               Object[2];
+            void*               Buckets;
+            Array<Entry>        Entries;
+            int                 Count;
+                                /*...*/
+        };
 
     public:
 
         class Iterator
         {
         public:
-            Iterator(Entry* _this, Entry* end) : m_This(_this - 1), m_End(end) { MoveNext(); }
+                                Iterator(Entry* _this, Entry* end) : m_This(_this - 1), m_End(end) { MoveNext(); }
 
-            Iterator& operator++() { if (m_This != m_End) MoveNext(); return *this; }
-            bool operator!=(const Iterator& other) const { return m_This != other.m_This; }
-            Entry& operator*() const { return *m_This; }
+            Iterator&           operator++() { if (m_This != m_End) MoveNext(); return *this; }
+            bool                operator!=(const Iterator& other) const { return m_This != other.m_This; }
+            Entry&              operator*() const { return *m_This; }
 
         private:
 
-            void MoveNext() { do { ++m_This; } while (m_This != m_End && m_This->Hash < 0); }
+            void                MoveNext() { do { ++m_This; } while (m_This != m_End && m_This->Hash < 0); }
 
-            Entry* m_This;
-            Entry* m_End;
+            Entry*              m_This;
+            Entry*              m_End;
         };
 
-        Iterator begin() 
-        { 
+        Iterator begin()
+        {
             THROW_IF_NULL();
             auto entries = ((Fields*)m_Ptr)->Entries;
             return Iterator(entries.begin(), entries.end()); 
@@ -776,6 +815,36 @@ namespace System
     // IMPLEMENTATION
     //
 
+    template <typename TKey, typename TValue>
+    Type KeyValuePair<TKey, TValue>::typeof()
+    {
+        static Type s_Type = Type::GetType("mscorlib", "System.Collections.Generic", "KeyValuePair`2", true).MakeGenericType({TKey::typeof(), TValue::typeof()});
+        return s_Type;
+    }
+
+    template <IsDotNetType T>
+    T List<T>::GetValue(size_t i) const 
+    { 
+        THROW_IF_NULL();
+
+        Fields* fields = (Fields*)m_Ptr; 
+
+        THROW_IF_GE(i, (size_t)fields->Size); 
+        return *((T*)&fields->Items.GetValue(i));  
+    }
+
+    template <IsDotNetType T>
+    void List<T>::SetValue(const T& val, size_t i) const 
+    { 
+        THROW_IF_NULL(); 
+
+        Fields* fields = (Fields*)m_Ptr; 
+        THROW_IF_GE(i, fields->Size);
+
+        fields->Items.SetValue(val, i);
+        fields->Version++;
+    }
+
     template <IsDotNetType T>
     void Array<T>::SetValue(const T& val, size_t i) const
     {
@@ -787,7 +856,7 @@ namespace System
         if constexpr (IsValType<T>)
             *target = val;
         else
-            Hax::Unity::Internal::GCSetField(m_Ptr, target, val);
+            Internal::GCSetField(m_Ptr, target, val);
     }
 
     template <typename T>
@@ -914,9 +983,9 @@ namespace System
         void* ret;
 
         if (isStatic)
-            ret = Hax::Unity::Internal::Invoke(uvmMethod, nullptr, packedArgs, &ex);
+            ret = Internal::Invoke(uvmMethod, nullptr, packedArgs, &ex);
         else
-            ret = Hax::Unity::Internal::Invoke(uvmMethod, packedArgs[0], nArgs == 1 ? nullptr : packedArgs + 1, &ex);
+            ret = Internal::Invoke(uvmMethod, packedArgs[0], nArgs == 1 ? nullptr : packedArgs + 1, &ex);
 
         if (ex != nullptr)
             throw std::bit_cast<Exception>(ex);
@@ -941,7 +1010,7 @@ namespace System
             T* items = (T*)&arr.m_UvmArray->Elements;
             for (size_t i = 0; i < size; ++i)
             {
-                Hax::Unity::Internal::GCSetField(arr, (Object*)(items + i), *(listItems + i));
+                Internal::GCSetField(arr, (Object*)(items + i), *(listItems + i));
             }
         }
 
@@ -980,16 +1049,6 @@ namespace System
         s_Add.Call<void>(*this, BoxOnNeed(item));
     }
 
-    /*template <IsDotNetType T>
-    void List<T>::SetValue(size_t i, const T& val) const
-    {
-        THROW_IF_NULL(); 
-        
-        static MethodInfo s_Method = typeof().GetMethod("set_Item", nullptr, true);
-
-        s_Method.Call<void, i, 
-    }*/
-
     template <typename T>
     String String::Join(String separator, const IEnumerable<T>* values)
     {
@@ -999,14 +1058,14 @@ namespace System
         return s_Method.Call<String, String, void*>(separator, *(void**)values);
     }
 
-    template <IsDictType TKey, IsDictType TValue>
+    template <IsDictParam TKey, IsDictParam TValue>
     Type Dictionary<TKey, TValue>::typeof() 
     { 
         static Type s_Type = Dictionary<>::typeof().MakeGenericType({TKey::typeof(), TValue::typeof()}); 
         return s_Type; 
     }
 
-    template <IsDictType TKey, IsDictType TValue>
+    template <IsDictParam TKey, IsDictParam TValue>
     TValue Dictionary<TKey, TValue>::GetItem(const TKey& key)
     {
         THROW_IF_NULL();
@@ -1015,7 +1074,7 @@ namespace System
         return s_Method.Call<TValue>(*this, BoxOnNeed(key));
     }
 
-    template <IsDictType TKey, IsDictType TValue>
+    template <IsDictParam TKey, IsDictParam TValue>
     void Dictionary<TKey, TValue>::SetItem(const TKey& key, const TValue& val)
     {
         THROW_IF_NULL();
@@ -1024,7 +1083,7 @@ namespace System
         return s_Method.Call<void>(*this, BoxOnNeed(key), BoxOnNeed(val));
     }
 
-    template <IsDictType TKey, IsDictType TValue>
+    template <IsDictParam TKey, IsDictParam TValue>
     void Dictionary<TKey, TValue>::Add(const TKey& key, const TValue& val)
     {
         THROW_IF_NULL();
@@ -1033,7 +1092,7 @@ namespace System
         s_Add.Call<void>(*this, BoxOnNeed(key), BoxOnNeed(val));
     }
 
-    template <IsDictType TKey, IsDictType TValue>
+    template <IsDictParam TKey, IsDictParam TValue>
     int Dictionary<TKey, TValue>::Count() const
     {
         THROW_IF_NULL();
@@ -1042,7 +1101,7 @@ namespace System
         return s_Add.Call<int>(*this);
     }
 
-    template <IsDictType TKey, IsDictType TValue>
+    template <IsDictParam TKey, IsDictParam TValue>
     bool Dictionary<TKey, TValue>::ContainsKey(const TKey& key)
     {
         THROW_IF_NULL();
@@ -1051,7 +1110,7 @@ namespace System
         return s_Method.Call<bool>(*this, BoxOnNeed(key));
     }
 
-    template <IsDictType TKey, IsDictType TValue>
+    template <IsDictParam TKey, IsDictParam TValue>
     bool Dictionary<TKey, TValue>::ContainsValue(const TValue& val)
     {
         THROW_IF_NULL();
@@ -1060,7 +1119,7 @@ namespace System
         return s_Method.Call<bool>(*this, val);
     }
 
-    template <IsDictType TKey, IsDictType TValue>
+    template <IsDictParam TKey, IsDictParam TValue>
     bool Dictionary<TKey, TValue>::TryGetValue(const TKey& key, TValue* val)
     {
         THROW_IF_NULL();
@@ -1092,4 +1151,14 @@ bool Is(Act obj)
         return true;
     else
         return Exp::typeof().IsInstanceOfType(obj);
+}
+
+namespace System
+{
+    TypeRequest& RequestType(const char* assembly, const char* namespaze, const char* name);
+    MethodRequest& RequestMethod(System::Type& type, const char* name, const char* sig = nullptr);
+    MethodWrapperRequest& RequestMethodWrapper(System::Type& type, const char* name, const char* sig = nullptr, int flags = System::MethodInfoWrapperFlags::Each);
+    FieldOffsetRequest& RequestFieldOffset(System::Type& type, const char* name);
+    StaticFieldRequest& RequestStaticField(System::Type& type, const char* name);
+    EnumRequest& RequestEnum(System::Type& type, const char* name);
 }
