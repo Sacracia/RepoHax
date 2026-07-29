@@ -705,12 +705,12 @@ namespace Hax::Gui
         if (g_Context == nullptr)
             return 0;
 
-        if (msg == WM_SETCURSOR)
+        /*if (msg == WM_SETCURSOR)
         {
-            if (LOWORD(lParam) == HTCLIENT && UpdateMouseIcon())
+            if (LOWORD(lParam) == HTCLIENT)
                 return 1;
             return 0;
-        }
+        }*/
 
         WndMsg newMsg
         {

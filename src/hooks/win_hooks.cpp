@@ -50,7 +50,6 @@ namespace Cheat
         HookModuleProc(user32, "PeekMessageW",      Hooked_PeekMessageW,     G->PeekMessageWHook);
         HookModuleProc(user32, "GetMessageA",       Hooked_GetMessageA,      G->GetMessageAHook);
         HookModuleProc(user32, "GetMessageW",       Hooked_GetMessageW,      G->GetMessageWHook);
-        HookModuleProc(user32, "GetMessageW",       Hooked_GetMessageW,      G->GetMessageWHook);
 
         HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
         HookModuleProc(kernel32, "TerminateProcess", Hooked_TerminateProcess, G->TerminateProcessHook);
@@ -182,24 +181,27 @@ namespace Cheat
 
     static BOOL WINAPI Hooked_PeekMessageW(LPMSG lpMsg, HWND  hWnd, UINT  wMsgFilterMin, UINT  wMsgFilterMax, UINT  wRemoveMsg)
     {
-        if (!G->PeekMessageWHook.unsafe_stdcall<BOOL, LPMSG, HWND, UINT, UINT, UINT>(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg))
+        BOOL ret = G->PeekMessageWHook.unsafe_stdcall<BOOL, LPMSG, HWND, UINT, UINT, UINT>(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
+
+        if (!ret)
             return FALSE;
 
         if (lpMsg != nullptr)
             HandleMessage(lpMsg);
 
-        return TRUE;
+        return ret;
     }
 
     static BOOL WINAPI Hooked_GetMessageW(LPMSG lpMsg, HWND  hWnd, UINT wMsgFilterMin, UINT  wMsgFilterMax)
     {
-        if (!G->GetMessageWHook.unsafe_stdcall<BOOL, LPMSG, HWND, UINT, UINT>(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax))
-            return FALSE;
+        BOOL ret = G->GetMessageWHook.unsafe_stdcall<BOOL, LPMSG, HWND, UINT, UINT>(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
+        if (ret <= 0)
+            return ret;
 
         if (lpMsg != nullptr)
             HandleMessage(lpMsg);
 
-        return TRUE;
+        return ret;
     }
 
     static BOOL WINAPI Hooked_GetMessageA(LPMSG lpMsg, HWND  hWnd, UINT wMsgFilterMin, UINT  wMsgFilterMax)
