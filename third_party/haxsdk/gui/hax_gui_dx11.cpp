@@ -783,6 +783,9 @@ float2 fastMap(float2 p, float2 center, float2 sincos)
 float sdEllipse(float2 p, float2 center, float2 r)
 {
     float2 q = p - center;
+    
+    q += 1e-6f; 
+
     float k1 = length(q / r);
     float k2 = length(q / (r * r));
     return (k1 - 1.0) * k1 / k2;
