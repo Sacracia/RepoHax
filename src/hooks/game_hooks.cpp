@@ -15,7 +15,7 @@ namespace Cheat
 
     static void* Hooked_MonoRuntimeInvoke(void* a1, void* a2, void* a3, void* a4);
     static void Hooked__EventSystem_Update(Unity::EventSystem __this);
-    static void Hooked__PlayerHealth_Hurt(PlayerHealth __this, int damage, bool savingGrace, int enemyIndex);
+    static void Hooked__PlayerHealth_Hurt(PlayerHealth __this, int damage, bool savingGrace, int enemyIndex, bool hurtByHeal);
     static void Hooked__PlayerAvatar_PlayerDeath(PlayerAvatar __this, int enemyIndex);
     static void Hooked__PlayerController_FixedUpdate(PlayerController __this);
     static void Hooked__PlayerController_Update(PlayerController __this);
@@ -31,7 +31,7 @@ namespace Cheat
     static void Hooked__PhysGrabber_RayCheck(PhysGrabber __this, bool grab);
     static bool Hooked__Physics_Raycast(void* v1, void* v2, void* v3, float maxDistance, int v5, int v6);
     static void Hooked__PhysGrabObjectImpactDetector_Break(PhysGrabObjectImpactDetector __this, float a1, void* a2, int a3, bool a4);
-    static void Hooked__PhysGrabObjectImpactDetector_DestroyObject(PhysGrabObjectImpactDetector __this, bool a1);
+    static void Hooked__PhysGrabObjectImpactDetector_DestroyObject(PhysGrabObjectImpactDetector __this, bool effects, bool forced);
     static bool Hooked__PhotonNetwork_IsMasterClient();
     static void Hooked__ItemBattery_Update(ItemBattery __this);
     static void Hooked__Camera_FireOnPreRender(Unity::Camera __this);
@@ -381,12 +381,12 @@ namespace Cheat
         G->EventSystem_Update_Hook.unsafe_call<void, Unity::EventSystem>(__this);
     }
 
-    static void Hooked__PlayerHealth_Hurt(PlayerHealth __this, int damage, bool savingGrace, int enemyIndex)
+    static void Hooked__PlayerHealth_Hurt(PlayerHealth __this, int damage, bool savingGrace, int enemyIndex, bool hurtByHeal)
     {
         if (G->Godmode)
             return;
 
-        G->PlayerHealth_Hurt_Hook.unsafe_call<void, PlayerHealth, int, bool, int>(__this, damage, savingGrace, enemyIndex);
+        G->PlayerHealth_Hurt_Hook.unsafe_call<void, PlayerHealth, int, bool, int, bool>(__this, damage, savingGrace, enemyIndex, hurtByHeal);
     }
 
     static void Hooked__PlayerAvatar_PlayerDeath(PlayerAvatar __this, int enemyIndex)
@@ -863,12 +863,12 @@ namespace Cheat
         G->PhysGrabObjectImpactDetector_Break_Hook.unsafe_call<void, PhysGrabObjectImpactDetector, float, void*, int, bool>(__this, a1, a2, a3, a4);
     }
 
-    static void Hooked__PhysGrabObjectImpactDetector_DestroyObject(PhysGrabObjectImpactDetector __this, bool a1)
+    static void Hooked__PhysGrabObjectImpactDetector_DestroyObject(PhysGrabObjectImpactDetector __this, bool effects, bool forced)
     {
         if (G->Unbreakable && __this.isValuable())
             return;
 
-        G->PhysGrabObjectImpactDetector_DestroyObject_Hook.unsafe_call<void, PhysGrabObjectImpactDetector, bool>(__this, a1);
+        G->PhysGrabObjectImpactDetector_DestroyObject_Hook.unsafe_call<void, PhysGrabObjectImpactDetector, bool, bool>(__this, effects, forced);
     }
 
     static bool g_PretendMaster;

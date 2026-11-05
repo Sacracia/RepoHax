@@ -15,7 +15,7 @@ namespace Unity
         static auto s_Method = typeof().GetMethod("get_bounds_Injected", nullptr, true).Wrap();
 
         Bounds ret;
-        s_Method.InternalCall<void>(*this, &ret);
+        s_Method.InternalCall<void>(GetCachedPtr(), &ret);
 
         return ret;
     }

@@ -6,7 +6,7 @@ struct PrefabRef : System::Object
 {
     using System::Object::Object;
 
-    META("Assembly-CSharp", "", "PrefabRef");
+    META("Assembly-CSharp", "", "PrefabRef`1");
 
     Unity::GameObject Prefab() { THROW_IF_NULL(); return s_get_Prefab.Call<Unity::GameObject>(*this); }
 
