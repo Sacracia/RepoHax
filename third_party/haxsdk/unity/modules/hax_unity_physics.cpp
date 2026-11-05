@@ -13,7 +13,7 @@ namespace Unity
         THROW_IF_NULL();
 
         static auto s_Method = typeof().GetMethod("AddForce_Injected", nullptr, true).Wrap();
-        s_Method.InternalCall<void>(*this, &force, mode);
+        s_Method.InternalCall<void>(GetCachedPtr(), &force, mode);
     }
 
     Vector3 Rigidbody::GetVelocity()
@@ -93,7 +93,7 @@ namespace Unity
         static auto s_Method = typeof().GetMethod("get_bounds_Injected", nullptr, true).Wrap();
 
         Bounds ret;
-        s_Method.InternalCall<void>(*this, &ret);
+        s_Method.InternalCall<void>(GetCachedPtr(), &ret);
 
         return ret;
     }
@@ -111,7 +111,7 @@ namespace Unity
         static auto s_Method = typeof().GetMethod("get_center_Injected", nullptr, true).Wrap();
 
         Vector3 ret;
-        s_Method.InternalCall<void>(*this, &ret);
+        s_Method.InternalCall<void>(GetCachedPtr(), &ret);
 
         return ret;
     }
@@ -123,7 +123,7 @@ namespace Unity
         static auto s_Method = typeof().GetMethod("get_size_Injected", nullptr, true).Wrap();
 
         Vector3 ret;
-        s_Method.InternalCall<void>(*this, &ret);
+        s_Method.InternalCall<void>(GetCachedPtr(), &ret);
 
         return ret;
     }

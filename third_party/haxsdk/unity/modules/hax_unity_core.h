@@ -276,10 +276,9 @@ namespace Unity
         static T                        Instantiate(T original, const Vector3& position, const Quaternion& rotation) { return std::bit_cast<T>(Instantiate((Object)original, position, rotation)); }
 
         int                             GetInstanceID();
+        void*                           GetCachedPtr() const { return m_Ptr ? ((Fields*)m_Ptr)->CachedPtr : nullptr; }
 
     private:
-        void*                           GetCachedPtr() { return ((Fields*)m_Ptr)->CachedPtr; }
-
         static bool                     IsNativeObjectAlive(Object o) { return o == null; }
         static bool                     CompareBaseObjects(Object lhs, Object rhs)
         {

@@ -947,17 +947,17 @@ namespace System
         HAX_ASSERT(ICall != nullptr);
         HAX_ASSERT((ImplFlags & 4096) != 0);
 
-        using Func = AbiRetT<RetT>(*)(Args..., void*);
-        Func icall = (Func)ICall;
-
         if constexpr (HAX_UNITY_IS_MONO)
         {
-            MonoError err{};
-            if constexpr (IsRefType<RetT>) return std::bit_cast<RetT>(icall(args..., &err));
-            else return icall(args..., &err);
+            using Func = AbiRetT<RetT>(*)(Args...);
+            Func icall = (Func)ICall;
+            if constexpr (IsRefType<RetT>) return std::bit_cast<RetT>(icall(args...));
+            else return icall(args...);
         }
         else
         {
+            using Func = AbiRetT<RetT>(*)(Args..., void*);
+            Func icall = (Func)ICall;
             if constexpr (IsRefType<RetT>) return std::bit_cast<RetT>(icall(args..., nullptr));
             else return icall(args..., nullptr);
         }
