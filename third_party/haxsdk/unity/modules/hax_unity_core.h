@@ -277,9 +277,10 @@ namespace Unity
 
         int                             GetInstanceID();
 
-    private:
+    protected:
         void*                           GetCachedPtr() { return ((Fields*)m_Ptr)->CachedPtr; }
 
+    private:
         static bool                     IsNativeObjectAlive(Object o) { return o == null; }
         static bool                     CompareBaseObjects(Object lhs, Object rhs)
         {
